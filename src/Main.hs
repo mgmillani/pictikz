@@ -22,6 +22,7 @@ import Pictikz.Graph
 import Pictikz.Loader
 import Pictikz.Parser
 import System.Environment
+import Data.Char
 
 appname = "pictikz"
 appver  = "1.0.0.0"
@@ -40,7 +41,7 @@ printGraph g = putStrLn $ draw g
 
 writeGraph outF g = writeFile outF $ draw g
 
-defaultPercent = 0.1
+defaultPercent = 0.2
 defaultAction = Action{help = False, version = False, nodeF = id, outputF = printGraph, inF = ""} :: Action Float Node
 
 parseArgs action args = case args of
@@ -66,20 +67,18 @@ parseArgs action args = case args of
     let w = read ws :: Float
         h = read hs :: Float
     in parseArgs (action{nodeF = (scaleToBox w h) . (nodeF action)}) r
-  "-u":('-':o):r         -> parseArgs (action{nodeF = (uniformCoordinatesBy distanceGroup defaultPercent) . (nodeF action)}) (('-':o):r)
-  "--uniform":('-':o):r  -> parseArgs (action{nodeF = (uniformCoordinatesBy distanceGroup defaultPercent) . (nodeF action)}) (('-':o):r)
-  "-u":ps:r              -> parseArgs (action{nodeF = (uniformCoordinatesBy distanceGroup (read ps / 100 :: Float)) . (nodeF action)}) r
-  "--uniform":ps:r       -> parseArgs (action{nodeF = (uniformCoordinatesBy distanceGroup (read ps / 100 :: Float)) . (nodeF action)}) r
-  "-u":r                 -> parseArgs (action{nodeF = (uniformCoordinatesBy distanceGroup defaultPercent) . (nodeF action)}) r
-  "--uniform":r          -> parseArgs (action{nodeF = (uniformCoordinatesBy distanceGroup defaultPercent) . (nodeF action)}) r
-  "-g":('-':o):r      -> parseArgs (action{nodeF = (uniformCoordinatesBy isometricGroup defaultPercent) . (nodeF action)}) (('-':o):r)
-  "--grid":('-':o):r  -> parseArgs (action{nodeF = (uniformCoordinatesBy isometricGroup defaultPercent) . (nodeF action)}) (('-':o):r)
-  "-g":ps:r           -> parseArgs (action{nodeF = (uniformCoordinatesBy isometricGroup (read ps / 100 :: Float)) . (nodeF action)}) r
-  "--grid":ps:r       -> parseArgs (action{nodeF = (uniformCoordinatesBy isometricGroup (read ps / 100 :: Float)) . (nodeF action)}) r
-  "-g":r              -> parseArgs (action{nodeF = (uniformCoordinatesBy isometricGroup defaultPercent) . (nodeF action)}) r
-  "--grid":r          -> parseArgs (action{nodeF = (uniformCoordinatesBy isometricGroup defaultPercent) . (nodeF action)}) r
+  "-u":r                 -> parseUniform (genGroup distanceGroup) action r
+  "--uniform":r          -> parseUniform (genGroup distanceGroup) action r
+  "-g":r              -> parseUniform isometricGroup action r
+  "--grid":r          -> parseUniform isometricGroup action r
   f:r   -> parseArgs action{inF = f} r
   [] -> action
+  where
+    isFloat n = and $ map (\x -> isNumber x || x =='.') n
+    parseUniform f action [] = action{nodeF = (uniformCoordinatesBy f defaultPercent) . (nodeF action)}
+    parseUniform f action (ps:r)
+      | isFloat ps = parseArgs (action{nodeF = (uniformCoordinatesBy f (read ps / 100 :: Float)) . (nodeF action)}) r
+      | otherwise  = parseArgs (action{nodeF = (uniformCoordinatesBy f defaultPercent) . (nodeF action)}) (ps:r)
 
 showHelp = do
   mapM_ putStrLn $
