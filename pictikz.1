@@ -1,0 +1,60 @@
+.\" Manpage for pictikz.
+.\" Contact marcelogmillani@gmail.com to correct errors or typos.
+.TH man 1 "26 Mar 2017" "1.0.0.0" "pictikz man page"
+.SH NAME
+pictikz \- a tool for converting SVG images into tikz code.
+.SH SYNOPSIS
+pictikz [OPTIONS...] FILE
+.SH DESCRIPTION
+Tikz is often used to draw graphs (i.e., networks) in LaTeX. Even though the resulting image can be very clean, manually writing tikz code can be time consuming, especially when the picture needs to be modified afterwards.
+
+On the other side of the spectrum, drawing with graphical tools like inkscape is easy, but getting a clean looking result can be complicated.
+
+With pictikz you get the best of both worlds: You draw using a graphical tool and pictikz converts the resulting SVG file to tikz code, making some automatic style adjustments if you desire.
+.SH OPTIONS
+.PP
+\fB-f, --fit WIDTH HEIGHT\fR
+.RS
+fit coordinates into a box of size WIDTH x HEIGHT without changing aspect ratio
+.RE
+\fB-g, --grid [PERCENT]\fR
+.RS
+fit coordinates into a grid (implies --uniform [PERCENT])
+.RE
+\fB-h, --help\fR
+.RS
+shows help
+.RE
+\fB-o, --output FILE\fR
+.RS
+writes output into FILE instead of stdout
+.RE
+\fB-s, --scale WIDTH HEIGHT\fR
+.RS
+scale coordinates into a box of size WIDTH x HEIGHT
+.RE
+\fB-u, --uniform [PERCENT]\fR
+.RS
+group coordinates by distance. Maximum distance for grouping is PERCENT of the axis in question.
+.RE
+\fB-v, --version\fR
+.RS
+outputs version and exits
+.SH CONVERSION
+Every circle and ellipse in the SVG file becomes a \\node[gnode] in tikz.
+
+Every rect becomes a \\node[rectangle].
+
+A path is converted to an edge from its initial point to its destination. Intermediary points of the path are irrelevant. The nearest nodes are used as endpoints of the edge.
+
+If the marker-end attribute of an edge is set, it is converted to \\draw[edgeto] in tikz. The attribute marker-start produces edgefrom instead, and both together produce edgeboth.
+
+The "very thick" property in tikz is set if the stroke-width attribute of the path is at least 50% larger than the minimum stroke-width and larger than the average between the minimum and maximum stroke-width.
+
+An edge becomes dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the edge. If it is set but smaller than that, the edge becomes dotted instead.
+
+Finally, text objects in SVG can become labels for nodes. For each text, the nearest node is taken.
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Marcelo Garlet Millani (marcelogmillani@gmail.com)
