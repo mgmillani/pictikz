@@ -22,7 +22,6 @@ Running `pictikz FILE` will convert the file using standard settings. The list o
 	-f, --fit WIDTH HEIGHT     fit coordinates into a box of size WIDTH x HEIGHT without
 	                             changing aspect ratio.
 	-g, --grid [PERCENT]       fit coordinates into a grid (implies --uniform [PERCENT]).
-	                             By default PERCENT = 10.
 	-h, --help                 show help.
 	-o, --output FILE          writes output into FILE instead of stdout.
 	-s, --scale WIDTH HEIGHT   scale coordinates into a box of size WIDTH x HEIGHT.
@@ -30,7 +29,7 @@ Running `pictikz FILE` will convert the file using standard settings. The list o
 	                             is PERCENT of the axis in question.
 	-v, --version              output version and exit.
 
-Check the `examples`  or the man page folder for more details.
+Check the `examples` folder or the man page (`pictikz.1`) for more details.
 
 ## Conversion
 
