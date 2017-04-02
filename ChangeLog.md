@@ -1,5 +1,5 @@
-# Revision history for svg2tikz
+# Revision history for pictikz
 
-## 0.1.0.0  -- YYYY-mm-dd
+## 1.0.0.0  -- 2017-04-02
 
 * First version. Released on an unsuspecting world.
