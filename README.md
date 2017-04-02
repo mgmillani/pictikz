@@ -13,7 +13,7 @@ Run
     cabal sandbox init
     cabal install
 
-This will generate the binary `picktiz` in `dist/pictikz`
+This will generate the binary `picktiz` in `.cabal-sandbox/bin`
 
 ## Usage
 

@@ -16,7 +16,7 @@ maintainer:          marcelogmillani@gmail.com
 -- copyright:
 category:            Graphics
 build-type:          Simple
-extra-source-files:  ChangeLog.md
+extra-source-files:  ChangeLog.md, pictikz.1
 cabal-version:       >=1.10
 
 executable pictikz
