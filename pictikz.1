@@ -41,17 +41,17 @@ group coordinates by distance. Maximum distance for grouping is PERCENT of the a
 .RS
 outputs version and exits
 .SH CONVERSION
-Every circle and ellipse in the SVG file becomes a \\node[gnode] in tikz.
+Every circle and ellipse in the SVG file becomes a \\node[pictikz-node] in tikz.
 
-Every rect becomes a \\node[rectangle].
+Every rect becomes a \\node[pictikz-rectangle].
 
 A path is converted to an edge from its initial point to its destination. Intermediary points of the path are irrelevant. The nearest nodes are used as endpoints of the edge.
 
-If the marker-end attribute of an edge is set, it is converted to \\draw[edgeto] in tikz. The attribute marker-start produces edgefrom instead, and both together produce edgeboth.
+If the marker-end attribute of an edge is set, it is converted to \\draw[pictikz-edgeto] in tikz. The attribute marker-start produces edgefrom instead, and both together produce edgeboth.
 
-The "very thick" property in tikz is set if the stroke-width attribute of the path is at least 50% larger than the minimum stroke-width and larger than the average between the minimum and maximum stroke-width.
+The pictikz-thick property in tikz is set if the stroke-width attribute of the path is at least 50% larger than the minimum stroke-width and larger than the average between the minimum and maximum stroke-width.
 
-An edge becomes dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the edge. If it is set but smaller than that, the edge becomes dotted instead.
+An edge becomes pictikz-dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the edge. If it is set but smaller than that, the edge becomes pictikz-dotted instead.
 
 Finally, text objects in SVG can become labels for nodes. For each text, the nearest node is taken.
 .SH BUGS

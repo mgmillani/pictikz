@@ -20,9 +20,9 @@ data Edge = Edge String String [EdgeStyle]        deriving (Show, Read, Eq, Ord)
 data Graph a = Graph [Node a] [Edge]              deriving (Show, Read, Eq, Ord)
 
 instance Show ArrowType where
-  show ArrowTo   = "edgeto"
-  show ArrowFrom = "edgefrom"
-  show ArrowBoth = "edgeboth"
+  show ArrowTo   = "pictikz-edgeto"
+  show ArrowFrom = "pictikz-edgefrom"
+  show ArrowBoth = "pictikz-edgeboth"
   show ArrowNone = ""
 
 instance Positionable Node where
@@ -30,17 +30,17 @@ instance Positionable Node where
   fPos f (Node x y id name style) = let (x1,y1) = f (x,y) in Node x1 y1 id name style
 
 instance Drawable NodeStyle where
-  draw Rectangle = ", rectangle"
+  draw Rectangle = ", pictikz-rectangle"
 
 instance Drawable EdgeStyle where
-  draw Dotted = ", dotted"
-  draw Dashed = ", dashed"
-  draw Thick  = ", very thick"
+  draw Dotted = ", pictikz-dotted"
+  draw Dashed = ", pictikz-dashed"
+  draw Thick  = ", pictikz-thick"
   draw (Arrow t) = ", " ++ show t
 
 instance (Num a, Show a) => Drawable (Node a) where
   draw (Node x y id name style) = concat
-    [ "\\node[gnode"
+    [ "\\node[pictikz-node"
     , concatMap draw style
     , "] ("
     , id,
