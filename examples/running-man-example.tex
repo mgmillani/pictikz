@@ -1,0 +1,24 @@
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{running-man.pdf}
+\caption{Input image (\texttt{running-man.svg}).}
+\end{figure}
+
+\begin{figure}[H]
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{running-man-plain}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{running-man-uniform}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{running-man-grid}
+\end{tikzpicture}
+\end{minipage}
+\caption{Plain conversion (\texttt{running-man-plain.tex}), with uniform coordinates (\texttt{running-man-uniform.tex}) and in a grid (\texttt{running-man-grid.tex}).}
+\end{figure}

@@ -1,0 +1,25 @@
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{tree.pdf}
+\caption{Input image (\texttt{tree.svg}).}
+\end{figure}
+
+\begin{figure}[H]
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{tree-plain}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{tree-uniform}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{tree-grid}
+\end{tikzpicture}
+\end{minipage}
+\caption{Plain conversion (\texttt{tree-plain.tex}), with uniform coordinates (\texttt{tree-uniform.tex}) and in a grid (\texttt{tree-grid.tex}).}
+\end{figure}

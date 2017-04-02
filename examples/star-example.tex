@@ -1,0 +1,24 @@
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{star.pdf}
+\caption{Input image (\texttt{star.svg}).}
+\end{figure}
+
+\begin{figure}[H]
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{star-plain}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{star-uniform}
+\end{tikzpicture}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\begin{tikzpicture}
+\input{star-grid}
+\end{tikzpicture}
+\end{minipage}
+\caption{Plain conversion (\texttt{star-plain.tex}), with uniform coordinates (\texttt{star-uniform.tex}) and in a grid (\texttt{star-grid.tex}).}
+\end{figure}

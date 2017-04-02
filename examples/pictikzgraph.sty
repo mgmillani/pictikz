@@ -1,0 +1,43 @@
+\ProvidesPackage{pictikzgraph}[2017/04/02 v1.0]
+
+\tikzset{
+	pictikz-node/.style={
+		inner sep=1.0pt,
+		circle,
+		draw,
+		radius=3pt,
+		minimum size=6pt
+	},
+	pictikz-rectangle/.style={
+		rectangle,
+		draw,
+		inner sep=2pt,
+		minimum size=6pt
+	},
+	pictikz-edgeto/.style={
+		->,
+		shorten <=2pt,
+		shorten >=2pt,
+	},
+	pictkiz-edgeboth/.style={
+		<->,
+		shorten <=2pt,
+		shorten >=2pt,
+	},
+	pictikz-edgefrom/.style={
+		<-,
+		shorten <=2pt,
+		shorten >=2pt,
+	},
+	pictikz-thick/.style={
+		very thick
+	},
+	pictikz-dashed/.style={
+		thick,
+		dashed,
+	},
+	pictikz-dotted/.style={
+		thick,
+		dotted,
+	}
+}
