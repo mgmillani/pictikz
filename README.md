@@ -1,19 +1,21 @@
+![On the left side there is a sketchy handdraw grid, while on the right side it looks perfect.](example.png?raw=true "Example of what pictikz can do.")
+
 ## pictikz
 
 Tikz is often used to draw graphs (i.e., networks) in LaTeX. Even though the resulting image can be very clean, manually writing tikz code can be time consuming, especially when the picture needs to be modified afterwards.
 
-On the other side of the spectrum, drawing with graphical tools like inkscape is easy, but getting a clean looking result can be complicated.
+On the other side of the spectrum, drawing with graphical tools like inkscape is easy, but getting a clean-looking result can be complicated.
 
 With pictikz you get the best of both worlds: You draw using a graphical tool and pictikz converts the resulting SVG file to tikz code, making some automatic style adjustments if you desire.
 
 ## Compiling
 
-Run
+Install `ghc` and `cabal`. Then run
 
     cabal sandbox init
     cabal install
 
-This will generate the binary `picktiz` in `.cabal-sandbox/bin`
+This will generate the binary `picktiz` in `.cabal-sandbox/bin`.
 
 ## Usage
 
