@@ -1,5 +1,9 @@
 # Revision history for pictikz
 
+## 1.1.0.0  -- 2017-04-09
+
+* Added style for nodes.
+
 ## 1.0.0.1  -- 2017-04-02
 
 * Fixed small problem with the .cabal file.

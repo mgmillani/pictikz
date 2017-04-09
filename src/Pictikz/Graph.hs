@@ -26,14 +26,15 @@ joinArrow ArrowTo ArrowFrom = ArrowBoth
 joinArrow ArrowFrom ArrowTo = ArrowBoth
 joinArrow a b = b
 
-data NodeStyle = Rectangle                         deriving (Show, Read, Eq, Ord)
-data EdgeStyle =
+data Style =
     Dashed
   | Dotted
   | Thick
+  | Rectangle
+  | Circle
   | Arrow ArrowType                               deriving (Show, Read, Eq, Ord)
-data Node a = Node a a String String [NodeStyle]  deriving (Show, Read, Eq, Ord)
-data Edge = Edge String String [EdgeStyle]        deriving (Show, Read, Eq, Ord)
+data Node a  = Node a a String String [Style]     deriving (Show, Read, Eq, Ord)
+data Edge    = Edge String String [Style]         deriving (Show, Read, Eq, Ord)
 data Graph a = Graph [Node a] [Edge]              deriving (Show, Read, Eq, Ord)
 
 instance Show ArrowType where
@@ -46,22 +47,22 @@ instance Positionable Node where
   getPos (Node x y _ _ _)     = (x,y)
   fPos f (Node x y id name style) = let (x1,y1) = f (x,y) in Node x1 y1 id name style
 
-instance Drawable NodeStyle where
+instance Drawable Style where
+  draw Dotted    = ", pictikz-dotted"
+  draw Dashed    = ", pictikz-dashed"
+  draw Thick     = ", pictikz-thick"
   draw Rectangle = ", pictikz-rectangle"
-
-instance Drawable EdgeStyle where
-  draw Dotted = ", pictikz-dotted"
-  draw Dashed = ", pictikz-dashed"
-  draw Thick  = ", pictikz-thick"
+  draw Circle    = ", pictikz-node"
+  draw (Arrow ArrowNone) = ""
   draw (Arrow t) = ", " ++ show t
 
 instance (Num a, Show a) => Drawable (Node a) where
   draw (Node x y id name style) = concat
-    [ "\\node[pictikz-node"
-    , concatMap draw style
+    [ "\\node["
+    , drop 2 $ concatMap draw style
     , "] ("
-    , id,
-    ") at ("
+    , id
+    , ") at ("
     , show x
     , ", "
     , show y
@@ -73,7 +74,7 @@ instance (Num a, Show a) => Drawable (Node a) where
 instance Drawable Edge where
   draw (Edge n1 n2 style) = concat
     [ "\\draw["
-    , concatMap draw style
+    , drop 2 $ concatMap draw style
     , "] ("
     , n1
     , ") edge ("

@@ -1,6 +1,6 @@
 .\" Manpage for pictikz.
 .\" Contact marcelogmillani@gmail.com to correct errors or typos.
-.TH man 1 "26 Mar 2017" "1.0.0.0" "pictikz man page"
+.TH man 1 "09 Apr 2017" "1.1.0.0" "pictikz man page"
 .SH NAME
 pictikz \- a tool for converting SVG images into tikz code.
 .SH SYNOPSIS
@@ -51,7 +51,7 @@ If the marker-end attribute of an edge is set, it is converted to \\draw[pictikz
 
 The pictikz-thick property in tikz is set if the stroke-width attribute of the path is at least 50% larger than the minimum stroke-width and larger than the average between the minimum and maximum stroke-width.
 
-An edge becomes pictikz-dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the edge. If it is set but smaller than that, the edge becomes pictikz-dotted instead.
+An object becomes pictikz-dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the object. If it is set but smaller than that, the object becomes pictikz-dotted instead.
 
 Finally, text objects in SVG can become labels for nodes. For each text, the nearest node is taken.
 .SH BUGS
