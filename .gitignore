@@ -1,0 +1,9 @@
+*.aux
+*.log
+examples/tree*.tex
+examples/box*.tex
+examples/grid*.tex
+examples/star*.tex
+examples/running-man*.tex
+examples/*example.pdf
+examples/examples.pdf
