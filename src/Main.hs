@@ -62,7 +62,7 @@ parseArgs action args = case args of
   "-s":ws:hs:r    ->
     let w = read ws :: Float
         h = read hs :: Float
-    in parseArgs (action{nodeF = (fitToBox w h) . (nodeF action)}) r
+    in parseArgs (action{nodeF = (scaleToBox w h) . (nodeF action)}) r
   "--scale":ws:hs:r  ->
     let w = read ws :: Float
         h = read hs :: Float
