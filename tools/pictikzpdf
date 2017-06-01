@@ -1,0 +1,83 @@
+#!/bin/sh
+
+#   Copyright 2017 Marcelo Garlet Millani
+#   This file is part of pictikz.
+
+#   pictikz is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+
+#   pictikz is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+#   You should have received a copy of the GNU General Public License
+#   along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
+
+for file; do true; done
+echo $file
+
+NAME=$(basename $file)
+
+PID=$$
+mkdir -p /tmp/pictikz/
+pictikz $@ > /tmp/pictikz/a$PID.tex
+
+echo "\documentclass{article}\
+\usepackage{graphics}\
+\usepackage{tikz}\
+\pgfrealjobname{fi-$PID}\
+\tikzset{\
+	pictikz-node/.style={\
+		inner sep=1.0pt,\
+		circle,\
+		draw,\
+		radius=3pt,\
+		minimum size=6pt\
+	},\
+	pictikz-rectangle/.style={\
+		rectangle,\
+		draw,\
+		inner sep=2pt,\
+		minimum size=6pt\
+	},\
+	pictikz-edgeto/.style={\
+		->,\
+		shorten <=2pt,\
+		shorten >=2pt,\
+	},\
+	pictkiz-edgeboth/.style={\
+		<->,\
+		shorten <=2pt,\
+		shorten >=2pt,\
+	},\
+	pictikz-edgefrom/.style={\
+		<-,\
+		shorten <=2pt,\
+		shorten >=2pt,\
+	},\
+	pictikz-thick/.style={\
+		very thick\
+	},\
+	pictikz-dashed/.style={\
+		thick,\
+		dashed,\
+	},\
+	pictikz-dotted/.style={\
+		thick,\
+		dotted,\
+	}\
+}\
+\begin{document}\
+\beginpgfgraphicnamed{fig-$PID}\
+\begin{tikzpicture}\
+\input{a$PID.tex}\
+\end{tikzpicture}\
+\endpgfgraphicnamed\
+\end{document}" > /tmp/pictikz/$PID-pic.tex
+DIR=$(pwd)
+cd /tmp/pictikz/
+pdflatex --jobname=fig-$PID $PID-pic.tex
+cp --no-clobber fig-$PID.pdf "$DIR/$NAME.pdf"
