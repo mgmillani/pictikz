@@ -12,6 +12,7 @@ With pictikz you get the best of both worlds: You draw using a graphical tool an
 
 Install `ghc` and `cabal`. Then run
 
+    cabal update
     cabal sandbox init
     cabal install
 
