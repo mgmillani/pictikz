@@ -14,8 +14,10 @@
 --  You should have received a copy of the GNU General Public License
 --  along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
 
-module Pictikz.Loader where
+module Pictikz.Loader (loadGraph) where
 
+--  import Prelude hiding (read)
+--  import qualified Prelude as P (read)
 import Data.Matrix hiding (trace)
 import Pictikz.Geometry
 import Pictikz.Drawing
@@ -29,6 +31,8 @@ import qualified Debug.Trace as D (trace)
 import qualified Text.XML.Light as X
 
 data Element a b = Object (Shape a) String String [b] | Line a a a a [b] | Text a a String deriving (Show, Eq)
+
+--  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
 isObject (Object _ _ _ _) = True
 isObject _ = False
@@ -52,7 +56,7 @@ loadGraph svg =
   let contents = X.parseXML svg
       elements = concatMap (parseElements (identity 3)) contents
       gnames = filter isText elements
-      gnodes = assignNames (fixGraphStyle (filter isObject elements)) gnames
+      gnodes = assignNames (fixGraphStyle (fixIDs $ filter isObject elements)) gnames
       gedges = map (closest gnodes) $ fixGraphStyle $ filter isLine elements
   in G.Graph (map (fPos (\(x,y) -> (x,-y))) (map toNode gnodes)) gedges
   where
@@ -72,7 +76,7 @@ loadGraph svg =
       -- Edges
       | (X.qName $ X.elName element) == "path" =  [transform matrix $ foldl parseEdge (Line 0 0 0 0 []) $ X.elAttribs element]
       -- Text
-      | (X.qName $ X.elName element) == "text" =  [transform matrix $ parseName $ X.elContent element]
+      | (X.qName $ X.elName element) == "text" =  [transform matrix $ parseName defaultText (X.Elem element)]
       | otherwise = concatMap (parseElements matrix ) $ X.elContent element
     parseElements matrix _ = []
     transform matrix ( Object (Rectangle x y w h) id name style) =
@@ -88,7 +92,7 @@ loadGraph svg =
           ry' = maximum [rx2,ry2,0] - minimum [rx2,ry2,0]
       in (Object (Ellipsis x' y' rx' ry') id name style)
     transform matrix (Line x0 y0 x1 y1 a) =
-      let [x0', y0',_, x1', y1', _] = toList $ matrix * (fromList 3 2 [x0,y0,1, x1,y1,1])
+      let [x0', x1', y0',y1',_, _] = toList $ matrix * (fromList 3 2 [x0,x1,y0,y1,1,1])
       in Line x0' y0' x1' y1' a
     transform matrix (Text x y str) =
       let [x', y',_] = toList $ matrix * (fromList 3 1 [x,y,1])
@@ -123,17 +127,10 @@ loadGraph svg =
       | otherwise = (Ellipsis x y rx ry, id, name, style, matrix)
     toNode (Object (Rectangle x y w h) id name style) = G.Node (x + w/2) (y + h/2) id name style
     toNode (Object (Ellipsis x y _ _)  id name style) = G.Node x y id name style
-    parseName [] = defaultText
-    parseName ((X.Elem element):xs)
-      | (X.qName $ X.elName element) == "tspan" =
-        let (x,y, matrix) = foldl parseCoordinates (0,0, identity 3) $ X.elAttribs element
-            getName (X.Text cdata) = Left $ X.cdData cdata
-            getName _ = Right ""
-            name  = foldl (>>) (Right "") $ map getName $ X.elContent element
-        in case name of
-          Left  n -> Text x y n
-          Right _ -> defaultText
-      | otherwise = parseName xs
+    parseName (Text x y n) (X.Text text) = (Text x y (X.cdData text))
+    parseName (Text _ _ n) (X.Elem element) =
+      let (x,y, matrix) = foldl parseCoordinates (0,0, identity 3) $ X.elAttribs element
+      in  foldl parseName (Text x y n) $ X.elContent element
     parseEdge (Line xa ya xb yb a) attr
       | "d" == (X.qName $ X.attrKey attr) =
         let path = parsePath $ X.attrVal attr
@@ -174,6 +171,7 @@ loadGraph svg =
       | "y" == (X.qName $ X.attrKey attr) = (x,(read $ X.attrVal attr :: Float), matrix)
       | "transform"  == (X.qName $ X.attrKey attr) = (x,y, matrix * (parseTransform $ X.attrVal attr))
       | otherwise = (x,y, matrix)
+    fixIDs objs = zipWith (\(Object s iD name style) i -> if null iD then (Object s (show i) name style) else (Object s iD name style)) objs [1..]
     assignNames [] _ = []
     assignNames gnodes [] = gnodes
     assignNames gnodes (t:ts) =

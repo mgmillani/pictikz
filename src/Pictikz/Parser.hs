@@ -14,9 +14,10 @@
 --  You should have received a copy of the GNU General Public License
 --  along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
 
-module Pictikz.Parser where
+module Pictikz.Parser (parseTransform, parseStyle, parsePath, readLength) where
 
 import Prelude hiding (splitAt)
+--  import qualified Prelude as P (read)
 import Data.Matrix
 import qualified Pictikz.Geometry as G
 import Control.Monad.Trans.State
@@ -24,6 +25,8 @@ import Control.Monad
 import Data.List hiding (splitAt)
 import Data.Char
 import qualified Debug.Trace as D (trace)
+
+--  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
 splitBy :: (Char -> Bool) -> String -> [String]
 splitBy _ [] = []
@@ -35,7 +38,7 @@ consumeWhile :: (Char -> Bool) -> State String String
 consumeWhile f = do
   str <- get
   let (x,r) = span f str
-  put r
+  put $ r
   return x
 
 whenNotEmpty e x = do
@@ -72,7 +75,7 @@ parseTransform transform = evalState parseTransform' transform
       consumeWhile  (\x -> x `elem` [' ', '(', '\t'])
       ps <- consumeWhile (/= ')')
       consumeWhile  (\x -> x `elem` [' ', ')', '\t'])
-      let params = (splitBy (==',') ps)
+      let params = (splitBy (\x -> x `elem` ", ") ps)
       return $ map read params
     buildTransform :: String -> [Float] -> (Matrix Float)
     buildTransform "scale" [sx]     = G.scale sx sx
@@ -179,20 +182,20 @@ parsePath path = evalState parsePath' path
           Right p -> return [p]
     coordPair :: State String (Float, Float)
     coordPair = do
-      consumeWhile (\x -> x `elem` [' ','\t',','])
-      x <- consumeWhile ((\x -> not $ x `elem` [' ','\t',',']))
-      consumeWhile (\x -> x `elem` [' ','\t',','])
-      y <- consumeWhile ((\x -> not $ x `elem` [' ','\t',',']))
-      return (read x, read y)
+      consumeWhile (\x -> x `elem` " \t,")
+      x <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))
+      consumeWhile (\x -> x `elem` " \t,")
+      y <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))
+      return $ (read x, read y)
     command :: State String String
     command = do
-      consumeWhile (\x -> x `elem` [' ','\t',','])
+      consumeWhile (\x -> x `elem` " \t,")
       c <- consumeWhile isAlpha
-      return c
+      return $ c
     value :: State String Float
     value = do
-      consumeWhile (\x -> x `elem` [' ','\t',','])
-      x <- consumeWhile ((\x -> not $ x `elem` [' ','\t',',']))
+      consumeWhile (\x -> x `elem` " \t,")
+      x <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))
       return $ read x
     skipNValue :: Int -> State String ()
     skipNValue n = replicateM_ n value
