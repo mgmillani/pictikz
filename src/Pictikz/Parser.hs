@@ -14,17 +14,18 @@
 --  You should have received a copy of the GNU General Public License
 --  along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
 
-module Pictikz.Parser (parseTransform, parseStyle, parsePath, readLength) where
+module Pictikz.Parser (parseTransform, parseStyle, parsePath, readLength, readColor, readHexa) where
 
 import Prelude hiding (splitAt)
 --  import qualified Prelude as P (read)
 import Data.Matrix
 import qualified Pictikz.Geometry as G
+import qualified Pictikz.Drawing  as D
 import Control.Monad.Trans.State
 import Control.Monad
 import Data.List hiding (splitAt)
 import Data.Char
-import qualified Debug.Trace as D (trace)
+import qualified Debug.Trace as Db (trace)
 
 --  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
@@ -50,6 +51,15 @@ mmFactor "cm" = 10
 mmFactor "pt" = 2.834646
 mmFactor "pc" = 0.2362205
 mmFactor _    = 1
+
+readHexa xyz =
+  let hexa = map digitToInt xyz
+  in case hexa of
+    (xh:xl:yh:yl:zh:zl:[]) -> ((xh*16 + xl), (yh*16 + yl), (zh*16 + zl))
+    (x:y:z:[]) -> ((x*17), (y*17), (z*17))
+readColor ('#':color) =
+  let (r,g,b) = readHexa color
+  in D.RGB r g b
 
 readLength len =
   let (n,u) = span (\x -> isNumber x || x == '.') len in (read n :: Float) * (mmFactor u)

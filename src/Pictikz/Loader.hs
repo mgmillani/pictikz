@@ -14,7 +14,7 @@
 --  You should have received a copy of the GNU General Public License
 --  along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
 
-module Pictikz.Loader (loadGraph) where
+module Pictikz.Loader (loadGraph, loadColors) where
 
 --  import Prelude hiding (read)
 --  import qualified Prelude as P (read)
@@ -52,12 +52,12 @@ defaultRectangle = (Rectangle 0 0 0 0, "", "", [(G.Rectangle, 0)], identity 3)
 defaultEllipsis  = (Ellipsis  0 0 0 0, "", "", [(G.Circle, 0)], identity 3)
 defaultGNode = G.Node 0 0 "" ""
 
-loadGraph svg =
+loadGraph svg colors =
   let contents = X.parseXML svg
       elements = concatMap (parseElements (identity 3)) contents
       gnames = filter isText elements
-      gnodes = assignNames (fixGraphStyle (fixIDs $ filter isObject elements)) gnames
-      gedges = map (closest gnodes) $ fixGraphStyle $ filter isLine elements
+      gnodes = assignNames (fixGraphStyle colors (fixIDs $ filter isObject elements)) gnames
+      gedges = map (closest gnodes) $ fixGraphStyle colors $ filter isLine elements
   in G.Graph (map (fPos (\(x,y) -> (x,-y))) (map toNode gnodes)) gedges
   where
     parseElements matrix (X.Elem element)
@@ -148,12 +148,16 @@ loadGraph svg =
       ("marker-end", _)             -> (G.Arrow G.ArrowTo,   undefined) : graphStyle xs
       ("marker-start", "none")      -> (G.Arrow G.ArrowNone, undefined) : graphStyle xs
       ("marker-start", _)           -> (G.Arrow G.ArrowFrom, undefined) : graphStyle xs
+      ("fill", "none")              -> graphStyle xs
+      ("fill", color)               -> (G.Fill color,  undefined) : graphStyle xs
+      ("stroke", "none")            -> graphStyle xs
+      ("stroke", color)             -> (G.Stroke color,  undefined) : graphStyle xs
       ("stroke-width", len)         -> (G.Thick, (readLength len)) : graphStyle xs
       ("stroke-dasharray", "none")  -> graphStyle xs
       ("stroke-dasharray", dashes)  -> let dash = takeWhile (/=',') dashes in (G.Dashed, (read dash :: Float)) : graphStyle xs
       _ -> graphStyle xs
-    fixGraphStyle :: [Element Float (G.Style, Float)] -> [Element Float G.Style]
-    fixGraphStyle ls =
+    fixGraphStyle :: [(Color, String)] -> [Element Float (G.Style, Float)] -> [Element Float G.Style]
+    fixGraphStyle colors ls =
       let strokeWs = map snd $ filter (\(s,v) -> s == G.Thick) $ concatMap getStyle ls
           minStroke = minimum strokeWs
           maxStroke = maximum strokeWs
@@ -163,6 +167,16 @@ loadGraph svg =
             (G.Thick, v)   -> if v > midStroke && v > minStroke * 1.4 then G.Thick : fixLine arrow ss else (fixLine arrow ss)
             (G.Dashed, v)  -> (if v > 2*minStroke then G.Dashed else G.Dotted) : (fixLine arrow ss)
             (G.Arrow a, _) -> fixLine (G.joinArrow a arrow) ss
+            (G.Fill c, _)  ->
+              let color = readColor c
+                  dists = map (\(c', n) -> (rgbDist c' color, n)) colors
+                  (_, cname) = minimumBy (\(c0, _) (c1, _) -> compare c0 c1) dists
+              in G.Fill cname : fixLine arrow ss
+            (G.Stroke c, _)  ->
+              let color = readColor c
+                  dists = map (\(c', n) -> (rgbDist c' color, n)) colors
+                  (_, cname) = minimumBy (\(c0, _) (c1, _) -> compare c0 c1) dists
+              in G.Stroke cname : fixLine arrow ss
             (s, _) -> s : (fixLine arrow ss)
       in map (fStyle (fixLine G.ArrowNone)) ls
       --in map (\(Line x0 y0 x1 y1 s) -> Line x0 y0 x1 y1 (fixLine G.ArrowNone s)) ls
@@ -187,3 +201,19 @@ loadGraph svg =
           (n0,_) = minimumBy (\p q -> compare (snd p) (snd q)) $ map (\(Object shape id _ _) -> (id, squareDistance p0 shape)) vertices
           (n1,_) = minimumBy (\p q -> compare (snd p) (snd q)) $ map (\(Object shape id _ _) -> (id, squareDistance p1 shape)) vertices
       in G.Edge n0 n1 a
+
+loadColors str = map (getColor . words) $ lines str
+  where
+    getColor (name:space:value)
+      | (map toLower space) == "rgb" =
+        let (r,g,b) = parseValue value 255 255 255
+        in (RGB r g b, name)
+      | (map toLower space) == "hsl" =
+        let (h,s,l) = parseValue value 360 100 100
+        in (fromHSL (fromIntegral h) (fromIntegral s / 100) (fromIntegral l / 100), name)
+    parseValue (('#':hex):_) _ _ _ = readHexa hex
+    parseValue (x:y:z:_) mx my mz =
+      let [x1,y1,z1] = zipWith parseNumber [x, y, z] [mx, my, mz] in (x1, y1, z1)
+    parseNumber x mx
+      | '.' `elem` x = round $ (read x :: Float) * mx
+      | otherwise = read x :: Int

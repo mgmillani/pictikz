@@ -32,6 +32,8 @@ data Style =
   | Thick
   | Rectangle
   | Circle
+  | Fill String
+  | Stroke String
   | Arrow ArrowType                               deriving (Show, Read, Eq, Ord)
 data Node a  = Node a a String String [Style]     deriving (Show, Read, Eq, Ord)
 data Edge    = Edge String String [Style]         deriving (Show, Read, Eq, Ord)
@@ -53,6 +55,8 @@ instance Drawable Style where
   draw Thick     = ", pictikz-thick"
   draw Rectangle = ", pictikz-rectangle"
   draw Circle    = ", pictikz-node"
+  draw (Fill c)  = ", fill=" ++ c
+  draw (Stroke c)  = ", draw=" ++ c
   draw (Arrow ArrowNone) = ""
   draw (Arrow t) = ", " ++ show t
 

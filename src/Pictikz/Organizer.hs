@@ -30,8 +30,8 @@ fitToBox w h objects =
       shifty = - minimum ys
       scalex = maximum xs
       scaley = maximum ys
-      scale = max (scalex + shiftx) (scaley + shifty)
-  in map (fPos (\(x,y) -> ((x + shiftx) * w/scale, (y + shifty) * h/scale)))  objects
+      scale = min (w / (scalex + shiftx)) (h / (scaley + shifty))
+  in map (fPos (\(x,y) -> ((x + shiftx) * scale, (y + shifty) * scale)))  objects
 
 scaleToBox w h objects =
   let positions = map getPos objects

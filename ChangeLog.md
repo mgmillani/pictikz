@@ -1,5 +1,10 @@
 # Revision history for pictikz
 
+## 1.2.0.0  -- 2017-09-03
+
+* Fixed a bug with fitting coordinates into a box.
+* Added colour support.
+
 ## 1.1.0.1  -- 2017-04-14
 
 * Fixed a bug where -s was being treated as -f.
