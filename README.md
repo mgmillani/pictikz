@@ -14,9 +14,10 @@ Install `ghc` and `cabal`. Then run
 
     cabal update
     cabal sandbox init
-    cabal install
+    cabal install --dependencies-only
+    cabal build
 
-This will generate the binary `picktiz` in `.cabal-sandbox/bin`.
+This will generate the binary `picktiz` in `dist/build/pictikz/`.
 
 ## Usage
 
@@ -40,3 +41,13 @@ The SVG standard uses the concept of shapes in its definition. That is, there ar
 This allows a program like `pictikz` to infer what a user meant and automatically produce a prettier output.
 
 Details of how the conversion works are given in the man page and illustrated on the examples. It is important to note that `pictikz` uses its own tikz style. So a dashed edges receives the tikz style `pictikz-dashed` instead of the conventional `dashed` for tikz. This is done in order to allow easier customization by the user. If you want all dashed edges to be actually dotted instead, you can do this by providing your own definition for `pictikz-dashed`. A sample style is given at the examples folder.
+
+## Colours
+Colours can be specified in a file where each line is in one of the following formats
+
+    <NAME> RGB [0 - 255] [0 - 255] [0 - 255]
+    <NAME> RGB #RRGGBB
+    <NAME> RGB #RGB
+    <NAME> HSL [0 - 360] [0 - 100] [0 - 100]
+
+Values can also be specified as floats between 0 and 1. In this case, they are interpreted as a percentage of their range.

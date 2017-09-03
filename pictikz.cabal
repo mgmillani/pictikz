@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                pictikz
-version:             1.1.0.1
+version:             1.2.0.0
 synopsis:            Converts a svg image to tikz code.
 description:         Tikz is often used to draw graphs (i.e., networks) in LaTeX. Even though the resulting image can be very clean, manually writing tikz code can be time consuming, especially when the picture needs to be modified afterwards.
 

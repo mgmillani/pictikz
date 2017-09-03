@@ -1,6 +1,6 @@
 .\" Manpage for pictikz.
 .\" Contact marcelogmillani@gmail.com to correct errors or typos.
-.TH pictikz 1 "14 Apr 2017" "1.1.0.1" "pictikz man page"
+.TH pictikz 1 "03 Sep 2017" "1.2.0.0" "pictikz man page"
 .SH NAME
 pictikz \- a tool for converting SVG images into tikz code.
 .SH SYNOPSIS
@@ -13,6 +13,10 @@ On the other side of the spectrum, drawing with graphical tools like inkscape is
 With pictikz you get the best of both worlds: You draw using a graphical tool and pictikz converts the resulting SVG file to tikz code, making some automatic style adjustments if you desire.
 .SH OPTIONS
 .PP
+\fB-c, --colours <FILE>\fR
+.RS
+load colour definitions from FILE. See COLOURS section below.
+.RE
 \fB-f, --fit WIDTH HEIGHT\fR
 .RS
 fit coordinates into a box of size WIDTH x HEIGHT without changing aspect ratio
@@ -54,6 +58,19 @@ The pictikz-thick property in tikz is set if the stroke-width attribute of the p
 An object becomes pictikz-dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the object. If it is set but smaller than that, the object becomes pictikz-dotted instead.
 
 Finally, text objects in SVG can become labels for nodes. For each text, the nearest node is taken.
+.SH COLOURS
+Colours can be specified in a file where each line is in one of the following formats
+
+.PP
+<NAME> RGB [0 - 255] [0 - 255] [0 - 255]
+.RE
+<NAME> RGB #RRGGBB
+.RE
+<NAME> RGB #RGB
+.RE
+<NAME> HSL [0 - 360] [0 - 100] [0 - 100]
+
+Values can also be specified as floats between 0 and 1. In this case, they are interpreted as a percentage of their range.
 .SH BUGS
 No known bugs.
 .SH AUTHOR
