@@ -23,7 +23,7 @@ This will generate the binary `picktiz` in `dist/build/pictikz/`.
 
 Running `pictikz FILE` will convert the file using standard settings. The list of options is
 
-        -c, --colours FILE         load colour definitions from FILE. See Colours section below for more information.
+	-c, --colours FILE         load colour definitions from FILE. See Colours section below for more information.
 	-f, --fit WIDTH HEIGHT     fit coordinates into a box of size WIDTH x HEIGHT without
 	                             changing aspect ratio.
 	-g, --grid [PERCENT]       fit coordinates into a grid (implies --uniform [PERCENT]).
