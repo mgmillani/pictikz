@@ -28,6 +28,7 @@ Running `pictikz FILE` will convert the file using standard settings. The list o
 	                             changing aspect ratio.
 	-g, --grid [PERCENT]       fit coordinates into a grid (implies --uniform [PERCENT]).
 	-h, --help                 show help.
+	    --latex-colours        output colours in LaTeX.
 	-o, --output FILE          writes output into FILE instead of stdout.
 	-s, --scale WIDTH HEIGHT   scale coordinates into a box of size WIDTH x HEIGHT.
 	-u, --uniform [PERCENT]    group coordinates by distance. Maximum distance for grouping
@@ -49,6 +50,6 @@ Colours can be specified in a file where each line is in one of the following fo
     <NAME> RGB [0 - 255] [0 - 255] [0 - 255]
     <NAME> RGB #RRGGBB
     <NAME> RGB #RGB
-    <NAME> HSL [0 - 360] [0 - 100] [0 - 100]
+    <NAME> HSL [0 - 359] [0 - 100] [0 - 100]
 
 Values can also be specified as floats between 0 and 1. In this case, they are interpreted as a percentage of their range.

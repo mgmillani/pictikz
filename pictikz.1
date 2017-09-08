@@ -1,6 +1,6 @@
 .\" Manpage for pictikz.
 .\" Contact marcelogmillani@gmail.com to correct errors or typos.
-.TH pictikz 1 "03 Sep 2017" "1.2.0.0" "pictikz man page"
+.TH pictikz 1 "08 Sep 2017" "1.2.0.1" "pictikz man page"
 .SH NAME
 pictikz \- a tool for converting SVG images into tikz code.
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ On the other side of the spectrum, drawing with graphical tools like inkscape is
 With pictikz you get the best of both worlds: You draw using a graphical tool and pictikz converts the resulting SVG file to tikz code, making some automatic style adjustments if you desire.
 .SH OPTIONS
 .PP
-\fB-c, --colours <FILE>\fR
+\fB-c, --colours FILE\fR
 .RS
 load colour definitions from FILE. See COLOURS section below.
 .RE
@@ -28,6 +28,10 @@ fit coordinates into a grid (implies --uniform [PERCENT])
 \fB-h, --help\fR
 .RS
 shows help
+.RE
+\fB    --latex-colours\fR
+.RS
+output colours in LaTeX.
 .RE
 \fB-o, --output FILE\fR
 .RS
