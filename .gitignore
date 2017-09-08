@@ -7,3 +7,9 @@ examples/star*.tex
 examples/running-man*.tex
 examples/*example.pdf
 examples/examples.pdf
+tests/grid*
+tests/uniform*
+tests/plain*
+tests/*.sty
+tests/*.pdf
+tests/compact.tex
