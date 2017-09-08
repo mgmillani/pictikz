@@ -58,7 +58,7 @@ loadGraph svg colors =
       gnames = filter isText elements
       gnodes = assignNames (fixGraphStyle colors (fixIDs $ filter isObject elements)) gnames
       gedges = map (closest gnodes) $ fixGraphStyle colors $ filter isLine elements
-  in G.Graph (map (fPos (\(x,y) -> (x,-y))) (map toNode gnodes)) gedges
+  in G.Graph (map (fPos (\(x,y) -> (x,-y))) (map toNode gnodes)) gedges :: G.Graph Double
   where
     parseElements matrix (X.Elem element)
       -- Objects
@@ -102,11 +102,11 @@ loadGraph svg colors =
       | otherwise = matrix
     parseRectangle (Rectangle x y w h, id, name, style, matrix) attr
       | "id" == (X.qName $ X.attrKey attr) = (Rectangle x y w h, (X.attrVal attr), name, style,  matrix)
-      | "x"  == (X.qName $ X.attrKey attr) = (Rectangle (read $ X.attrVal attr :: Float) y w h, id, name, style, matrix)
-      | "y"  == (X.qName $ X.attrKey attr) = (Rectangle x (read $ X.attrVal attr :: Float) w h, id, name, style, matrix)
-      | "height" == (X.qName $ X.attrKey attr) = (Rectangle x y w (read $ X.attrVal attr :: Float), id, name, style, matrix)
-      | "width"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr :: Float) h, id, name, style, matrix)
-      | "transform"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr :: Float) h, id, name, style, matrix * (parseTransform $ X.attrVal attr))
+      | "x"  == (X.qName $ X.attrKey attr) = (Rectangle (read $ X.attrVal attr ) y w h, id, name, style, matrix)
+      | "y"  == (X.qName $ X.attrKey attr) = (Rectangle x (read $ X.attrVal attr ) w h, id, name, style, matrix)
+      | "height" == (X.qName $ X.attrKey attr) = (Rectangle x y w (read $ X.attrVal attr ), id, name, style, matrix)
+      | "width"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr ) h, id, name, style, matrix)
+      | "transform"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr ) h, id, name, style, matrix * (parseTransform $ X.attrVal attr))
       | "style"      == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
             style' = graphStyle fields
@@ -114,11 +114,11 @@ loadGraph svg colors =
       | otherwise = (Rectangle x y w h, id, name, style, matrix)
     parseEllipsis (Ellipsis x y rx ry, id, name, style, matrix) attr
       | "id" == (X.qName $ X.attrKey attr) = (Ellipsis x y rx ry, (X.attrVal attr), name, style, matrix)
-      | "cx" == (X.qName $ X.attrKey attr) = (Ellipsis (read $ X.attrVal attr :: Float) y rx ry, id, name, style, matrix)
-      | "cy" == (X.qName $ X.attrKey attr) = (Ellipsis x (read $ X.attrVal attr :: Float) rx ry, id, name, style, matrix)
-      | "rx" == (X.qName $ X.attrKey attr) = (Ellipsis x y (read $ X.attrVal attr :: Float)  ry, id, name, style, matrix)
-      | "ry" == (X.qName $ X.attrKey attr) = (Ellipsis x y rx (read $ X.attrVal attr :: Float) , id, name, style, matrix)
-      | "r"  == (X.qName $ X.attrKey attr) = (Ellipsis x y (read $ X.attrVal attr :: Float) (read $ X.attrVal attr :: Float), id, name, style, matrix)
+      | "cx" == (X.qName $ X.attrKey attr) = (Ellipsis (read $ X.attrVal attr ) y rx ry, id, name, style, matrix)
+      | "cy" == (X.qName $ X.attrKey attr) = (Ellipsis x (read $ X.attrVal attr ) rx ry, id, name, style, matrix)
+      | "rx" == (X.qName $ X.attrKey attr) = (Ellipsis x y (read $ X.attrVal attr )  ry, id, name, style, matrix)
+      | "ry" == (X.qName $ X.attrKey attr) = (Ellipsis x y rx (read $ X.attrVal attr ) , id, name, style, matrix)
+      | "r"  == (X.qName $ X.attrKey attr) = (Ellipsis x y (read $ X.attrVal attr ) (read $ X.attrVal attr ), id, name, style, matrix)
       | "transform"  == (X.qName $ X.attrKey attr) = (Ellipsis x y rx ry, id, name, style, matrix * (parseTransform $ X.attrVal attr))
       | "style"      == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
@@ -134,14 +134,14 @@ loadGraph svg colors =
     parseEdge (Line xa ya xb yb a) attr
       | "d" == (X.qName $ X.attrKey attr) =
         let path = parsePath $ X.attrVal attr
-            ((x0,y0), (x1,y1)) = ((head path :: (Float, Float)), (last path :: (Float, Float)))
+            ((x0,y0), (x1,y1)) = ((head path), (last path))
         in Line x0 y0 x1 y1 a
       | "style"        == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
             style = graphStyle fields
         in Line xa ya xb yb style
       | otherwise = Line xa ya xb yb a
-    graphStyle :: [(String, String)] -> [(G.Style, Float)]
+    graphStyle :: (Read a, Floating a) => [(String, String)] -> [(G.Style, a)]
     graphStyle [] = []
     graphStyle (x:xs) = case x of
       ("marker-end", "none")        -> (G.Arrow G.ArrowNone, undefined) : graphStyle xs
@@ -154,9 +154,9 @@ loadGraph svg colors =
       ("stroke", color)             -> (G.Stroke color,  undefined) : graphStyle xs
       ("stroke-width", len)         -> (G.Thick, (readLength len)) : graphStyle xs
       ("stroke-dasharray", "none")  -> graphStyle xs
-      ("stroke-dasharray", dashes)  -> let dash = takeWhile (/=',') dashes in (G.Dashed, (read dash :: Float)) : graphStyle xs
+      ("stroke-dasharray", dashes)  -> let dash = takeWhile (/=',') dashes in (G.Dashed, (read dash)) : graphStyle xs
       _ -> graphStyle xs
-    fixGraphStyle :: [(Color, String)] -> [Element Float (G.Style, Float)] -> [Element Float G.Style]
+    fixGraphStyle :: (Ord a, Floating a) => [(Color, String)] -> [Element a (G.Style, a)] -> [Element a G.Style]
     fixGraphStyle colors ls =
       let strokeWs = map snd $ filter (\(s,v) -> s == G.Thick) $ concatMap getStyle ls
           minStroke = minimum strokeWs
@@ -181,8 +181,8 @@ loadGraph svg colors =
       in map (fStyle (fixLine G.ArrowNone)) ls
       --in map (\(Line x0 y0 x1 y1 s) -> Line x0 y0 x1 y1 (fixLine G.ArrowNone s)) ls
     parseCoordinates (x,y, matrix) attr
-      | "x" == (X.qName $ X.attrKey attr) = ((read $ X.attrVal attr :: Float), y, matrix)
-      | "y" == (X.qName $ X.attrKey attr) = (x,(read $ X.attrVal attr :: Float), matrix)
+      | "x" == (X.qName $ X.attrKey attr) = ((read $ X.attrVal attr), y, matrix)
+      | "y" == (X.qName $ X.attrKey attr) = (x,(read $ X.attrVal attr), matrix)
       | "transform"  == (X.qName $ X.attrKey attr) = (x,y, matrix * (parseTransform $ X.attrVal attr))
       | otherwise = (x,y, matrix)
     fixIDs objs = zipWith (\(Object s iD name style) i -> if null iD then (Object s (show i) name style) else (Object s iD name style)) objs [1..]
@@ -209,11 +209,11 @@ loadColors str = map (getColor . words) $ lines str
         let (r,g,b) = parseValue value 255 255 255
         in (RGB r g b, name)
       | (map toLower space) == "hsl" =
-        let (h,s,l) = parseValue value 360 100 100
+        let (h,s,l) = parseValue value 359 100 100
         in (fromHSL (fromIntegral h) (fromIntegral s / 100) (fromIntegral l / 100), name)
     parseValue (('#':hex):_) _ _ _ = readHexa hex
     parseValue (x:y:z:_) mx my mz =
       let [x1,y1,z1] = zipWith parseNumber [x, y, z] [mx, my, mz] in (x1, y1, z1)
     parseNumber x mx
-      | '.' `elem` x = round $ (read x :: Float) * mx
+      | '.' `elem` x = round $ (read x) * mx
       | otherwise = read x :: Int

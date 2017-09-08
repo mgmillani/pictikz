@@ -62,13 +62,13 @@ readColor ('#':color) =
   in D.RGB r g b
 
 readLength len =
-  let (n,u) = span (\x -> isNumber x || x == '.') len in (read n :: Float) * (mmFactor u)
+  let (n,u) = span (\x -> isNumber x || x == '.') len in (read n) * (mmFactor u)
 
 parseStyle style = map (\f -> let (k,v) = span (/=':') f in (k,tail v) ) $ splitBy (==';') style
 
 parseTransform transform = evalState parseTransform' transform
   where
-    parseTransform' :: State String (Matrix Float)
+    --  parseTransform' :: Floating a => State String (Matrix a)
     parseTransform' = do
       f <- function
       ps <- parameters
@@ -80,20 +80,20 @@ parseTransform transform = evalState parseTransform' transform
       consumeWhile (\x -> x `elem` [' ','\t'])
       f <- consumeWhile isAlpha
       return $ map toLower f
-    parameters :: State String [Float]
+    --  parameters :: Floating a => State String [a]
     parameters = do
       consumeWhile  (\x -> x `elem` [' ', '(', '\t'])
       ps <- consumeWhile (/= ')')
       consumeWhile  (\x -> x `elem` [' ', ')', '\t'])
       let params = (splitBy (\x -> x `elem` ", ") ps)
       return $ map read params
-    buildTransform :: String -> [Float] -> (Matrix Float)
+    buildTransform :: Floating a => String -> [a] -> (Matrix a)
     buildTransform "scale" [sx]     = G.scale sx sx
     buildTransform "scale" [sx,sy]  = G.scale sx sy
     buildTransform "translate" [tx]     = G.translate tx 0
     buildTransform "translate" [tx, ty] = G.translate tx ty
-    buildTransform "rotate" [a]        = G.rotate a
-    buildTransform "rotate" [a,cx ,cy] = (G.translate cx cy) * (G.rotate a) * (G.translate (-cx) (-cy))
+    buildTransform "rotate" [a]        = G.rotate (pi * a / 180)
+    buildTransform "rotate" [a,cx ,cy] = (G.translate cx cy) * (G.rotate (pi * a / 180)) * (G.translate (-cx) (-cy))
     buildTransform "matrix" [a,b,c,d,e,f] = fromList 3 3 [a,c,e,b,d,f,0,0,1]
     buildTransform "skewx" [a] = G.skewx a
     buildTransform "skewy" [a] = G.skewy a
@@ -101,7 +101,7 @@ parseTransform transform = evalState parseTransform' transform
 
 parsePath path = evalState parsePath' path
   where
-    parsePath' :: State String [(Float, Float)]
+    --  parsePath' :: State String [(Float, Float)]
     parsePath' = do
       c <- command
       processCommand (0,0) (Right (0,0)) c
@@ -190,7 +190,7 @@ parsePath path = evalState parsePath' path
         case first of
           Left p  -> return [p]
           Right p -> return [p]
-    coordPair :: State String (Float, Float)
+    --  coordPair :: Floating a => State String (a, a)
     coordPair = do
       consumeWhile (\x -> x `elem` " \t,")
       x <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))
@@ -202,7 +202,7 @@ parsePath path = evalState parsePath' path
       consumeWhile (\x -> x `elem` " \t,")
       c <- consumeWhile isAlpha
       return $ c
-    value :: State String Float
+    --  value :: Floating a => State String a
     value = do
       consumeWhile (\x -> x `elem` " \t,")
       x <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))

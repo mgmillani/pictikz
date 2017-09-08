@@ -30,8 +30,8 @@ fitToBox w h objects =
       shifty = - minimum ys
       scalex = maximum xs
       scaley = maximum ys
-      scale = min (w / (scalex + shiftx)) (h / (scaley + shifty))
-  in map (fPos (\(x,y) -> ((x + shiftx) * scale, (y + shifty) * scale)))  objects
+      scale = max ((scalex + shiftx) / w) ((scaley + shifty) / h)
+  in if scale == 0 then objects else map (fPos (\(x,y) -> ((x + shiftx) / scale, (y + shifty) / scale)))  objects
 
 scaleToBox w h objects =
   let positions = map getPos objects
@@ -39,8 +39,10 @@ scaleToBox w h objects =
       ys = map snd positions
       shiftx = - minimum xs
       shifty = - minimum ys
-      scalex = shiftx + maximum xs
-      scaley = shifty + maximum ys
+      scalex' = shiftx + maximum xs
+      scaley' = shifty + maximum ys
+      scalex = if scalex' == 0 then 1 else scalex'
+      scaley = if scaley' == 0 then 1 else scaley'
   in map (fPos (\(x,y) -> ((x + shiftx) * w/scalex, (y + shifty) * h/scaley)))  objects
 
 average xs = realToFrac (sum xs) / genericLength xs
@@ -51,13 +53,13 @@ average xs = realToFrac (sum xs) / genericLength xs
 uniformCoordinatesBy groupf d ns =
   let nsx = sortBy (\n m -> compare (fst $ getPos n) (fst $ getPos m)) ns
       xs = map (fst . getPos) nsx
-      dx = d * ((maximum xs) - (minimum xs))
+      dx = max 1e-5 $ d * ((maximum xs) - (minimum xs))
       ux = concat $ groupf dx xs
       -- update x coordinates
       ns1 = zipWith (\n x1 -> fPos (\(x,y) -> (x1,y)) n) nsx ux
       nsy = sortBy (\n m -> compare (snd $ getPos n) (snd $ getPos m)) ns1
       ys = map (snd . getPos) nsy
-      dy = d * ((maximum ys) - (minimum ys))
+      dy = max 1e-5 $ d * ((maximum ys) - (minimum ys))
       uy = concat $ groupf dy ys
   in zipWith (\n y1 -> fPos (\(x,y) -> (x,y1)) n) nsy uy
 

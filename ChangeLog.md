@@ -1,5 +1,11 @@
 # Revision history for pictikz
 
+## 1.2.1.0  -- 2017-09-08
+
+* Fixed a bug when using a grid with a single column or row.
+* Fixed domain range for HSL.
+* Replaced Float with Double.
+
 ## 1.2.0.0  -- 2017-09-03
 
 * Fixed a bug with fitting coordinates into a box.

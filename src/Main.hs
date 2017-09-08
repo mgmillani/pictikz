@@ -54,7 +54,7 @@ defaultAction = Action
   , inF = ""
   , colorFile = ""
   , colors = defaultColors
-  } :: Action Float Node
+  } :: Action Double Node
 
 parseArgs action args = case args of
   "-c"       :f:r -> parseArgs (action{colorFile = f}) r
@@ -67,22 +67,22 @@ parseArgs action args = case args of
   "-o"      :f:r  -> parseArgs (action{outputF = writeGraph f}) r
   "--output":f:r  -> parseArgs (action{outputF = writeGraph f}) r
   "-f"   :ws:hs:r  ->
-    let w = read ws :: Float
-        h = read hs :: Float
+    let w = read ws
+        h = read hs
     in parseArgs (action{nodeF = (fitToBox w h) . (nodeF action)}) r
   "--fit":ws:hs:r  ->
-    let w = read ws :: Float
-        h = read hs :: Float
+    let w = read ws
+        h = read hs
     in parseArgs (action{nodeF = (fitToBox w h) . (nodeF action)}) r
   "--latex-colours":r -> parseArgs action{latexColors = True} r
   "--latex-colors" :r -> parseArgs action{latexColors = True} r
   "-s"     :ws:hs:r  ->
-    let w = read ws :: Float
-        h = read hs :: Float
+    let w = read ws
+        h = read hs
     in parseArgs (action{nodeF = (scaleToBox w h) . (nodeF action)}) r
   "--scale":ws:hs:r  ->
-    let w = read ws :: Float
-        h = read hs :: Float
+    let w = read ws
+        h = read hs
     in parseArgs (action{nodeF = (scaleToBox w h) . (nodeF action)}) r
   "-u"       :r   -> parseUniform (genGroup distanceGroup) action r
   "--uniform":r   -> parseUniform (genGroup distanceGroup) action r
@@ -94,7 +94,7 @@ parseArgs action args = case args of
     isFloat n = and $ map (\x -> isNumber x || x =='.') n
     parseUniform f action [] = action{nodeF = (uniformCoordinatesBy f defaultPercent) . (nodeF action)}
     parseUniform f action (ps:r)
-      | isFloat ps = parseArgs (action{nodeF = (uniformCoordinatesBy f (read ps / 100 :: Float)) . (nodeF action)}) r
+      | isFloat ps = parseArgs (action{nodeF = (uniformCoordinatesBy f (read ps / 100)) . (nodeF action)}) r
       | otherwise  = parseArgs (action{nodeF = (uniformCoordinatesBy f defaultPercent) . (nodeF action)}) (ps:r)
 
 showHelp = do
@@ -123,7 +123,7 @@ showVersion = putStrLn $ appname ++ appver ++ applicense
 defaultColors =
   [ (RGB    0    0    0, "pictikz-black")
   , (RGB  255  255  255, "pictikz-white")
-  , (RGB  128  128    0, "pictikz-gray")
+  , (RGB  128  128  128, "pictikz-gray")
   , (RGB  255   83   83, "pictikz-red")
   , (RGB  101  237  101, "pictikz-green")
   , (RGB  123  168  255, "pictikz-blue")
@@ -134,8 +134,6 @@ defaultColors =
   , (RGB  255  166   61, "pictikz-orange")
   , (RGB  255  141  255, "pictikz-pink")
   ]
-
-
 
 execute action
   | help action      = showHelp
@@ -157,5 +155,5 @@ execute action
 main :: IO ()
 main = do
   args <- getArgs
-  let action = parseArgs defaultAction args :: Action Float Node
+  let action = parseArgs defaultAction args :: Action Double Node
   execute action

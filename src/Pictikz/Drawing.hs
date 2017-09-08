@@ -16,6 +16,8 @@
 
 module Pictikz.Drawing where
 
+import qualified Debug.Trace as D (trace)
+
 -- RGB color with one byte per channel (0 to 255).
 data Color = RGB Int Int Int
 
@@ -50,7 +52,7 @@ fromHSL h s l =
     (h', h'') = properFraction $ h / 60
     m = round $ 255 * (l - 0.5*c')
     x = (round $ 255 * c' * (1 - (abs $ h'' - 1))) + m
-    c = round $ 255 * c'
+    c = (round $ 255 * c') + m
 
 tikzpicture d = concat
   [ "\\begin{tikzpicture}\n"
