@@ -3,7 +3,7 @@
 BIN=dist/build/pictikz/pictikz
 
 echo "" > tests/compact.tex
-cp examples/pictikzgraph.sty tests
+cp pictikzgraph.sty tests
 
 for s in examples/*.svg
 do
@@ -31,3 +31,4 @@ done
 
 cd tests
 pdflatex test.tex
+rm pictikzgraph.sty

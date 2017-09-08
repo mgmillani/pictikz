@@ -1,4 +1,5 @@
 #!/bin/sh
+cp ../pictikzgraph.sty .
 
 # Grid example
 pictikz           --fit 3 3 grid.svg --output grid-plain.tex
@@ -26,3 +27,4 @@ pictikz --uniform --scale 2 2 box.svg --output box-uniform.tex
 pictikz --grid    --scale 2 2 box.svg --output box-grid.tex
 
 pdflatex examples.tex
+rm pictikzgraph.sty
