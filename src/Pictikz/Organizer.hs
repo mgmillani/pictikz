@@ -16,11 +16,59 @@
 
 module Pictikz.Organizer where
 
+import qualified Data.Set as S
+import qualified Data.Map as M
 import Pictikz.Drawing
 import Pictikz.Graph
 import Data.List
+import Data.Maybe
 
 import qualified Debug.Trace as D (trace)
+
+boundingBox (Graph nodes edges) =
+  let coords = map getPos nodes
+      x0 = minimum $ map fst $ coords
+      x1 = maximum $ map fst $ coords
+      y0 = minimum $ map snd $ coords
+      y1 = maximum $ map snd $ coords
+  in (x0,y0,x1,y1)
+
+-- | Join equal vertices which stand on the same position in subsequent layers
+mergeLayers epsilon (Graph n0 e0) (Graph n1 e1) = Graph gnodes gedges
+  -- TODO: only nodes of adjacent layers should be compared. Right now, n1 contains all nodes.
+  where
+    epsilon2 = epsilon * epsilon
+    mergeNode n [] = ([], Nothing)
+
+    mergeNode n (m:ms) =
+      let (Node x0 y0 uid0 name0 style0 (t0, t1)) = n
+          (Node x1 y1 uid1 name1 style1 (t2, t3)) = m
+          d = (x1 - x0)^2 + (y1 - y0)^2
+      in if d < epsilon2 && t1 == (t2-1) && name0 == name1 && style0 == style1 then
+          ((Node x1 y1 uid1 name1 style1 (t0,t3)) : ms, Just uid1)
+         else
+           let (r, rn) = mergeNode n ms
+           in (m : r, rn)
+    mergeNodes [] ms = (M.empty, ms)
+    mergeNodes (n:ns) ms =
+      let (ms', n') = mergeNode n ms
+          (t, nodes') = mergeNodes ns ms'
+      in case n' of
+        Nothing    -> (t, n : nodes')
+        Just uid1  ->
+          let (Node _ _ uid0 _ _ _) = n
+          in (M.insert uid0 uid1 t, nodes')
+    (table, gnodes) = mergeNodes n0 n1
+    edgeIda   (Edge v u style (t0,t1)) = (v, u, style, t1)
+    edgeIdb   (Edge v u style (t0,t1)) = (v, u, style, t0-1)
+    edgeInfo (Edge v u style time) = time
+    gedges =  map (\((v, u, style, _), time) -> Edge v u style time) $ M.toList $
+      M.unionWith (\(t0, _) (_,t1) -> (t0,t1))
+        (M.fromList $ map (\e -> (edgeIda e, edgeInfo e)) $ map updateEdge e0)
+        (M.fromList $ map (\e -> (edgeIdb e, edgeInfo e)) $ map updateEdge e1)
+    updateEdge (Edge v u style time) = (Edge (f v) (f u) style time)
+      where
+        f x = fromMaybe x $ table M.!? x
 
 fitToBox w h objects =
   let positions = map getPos objects

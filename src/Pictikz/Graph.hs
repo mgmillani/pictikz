@@ -34,10 +34,10 @@ data Style =
   | Circle
   | Fill String
   | Stroke String
-  | Arrow ArrowType                               deriving (Show, Read, Eq, Ord)
-data Node a  = Node a a String String [Style]     deriving (Show, Read, Eq, Ord)
-data Edge    = Edge String String [Style]         deriving (Show, Read, Eq, Ord)
-data Graph a = Graph [Node a] [Edge]              deriving (Show, Read, Eq, Ord)
+  | Arrow ArrowType                                      deriving (Show, Read, Eq, Ord)
+data Node a  = Node a a String String [Style] (Int, Int) deriving (Show, Read, Eq, Ord)
+data Edge    = Edge String String [Style] (Int, Int)     deriving (Show, Read, Eq, Ord)
+data Graph a = Graph [Node a] [Edge]                     deriving (Show, Read, Eq, Ord)
 
 instance Show ArrowType where
   show ArrowTo   = "pictikz-edgeto"
@@ -46,8 +46,8 @@ instance Show ArrowType where
   show ArrowNone = ""
 
 instance Positionable Node where
-  getPos (Node x y _ _ _)     = (x,y)
-  fPos f (Node x y id name style) = let (x1,y1) = f (x,y) in Node x1 y1 id name style
+  getPos (Node x y _ _ _ _)     = (x,y)
+  fPos f (Node x y id name style time) = let (x1,y1) = f (x,y) in Node x1 y1 id name style time
 
 instance Drawable Style where
   draw Dotted    = ", pictikz-dotted"
@@ -61,8 +61,9 @@ instance Drawable Style where
   draw (Arrow t) = ", " ++ show t
 
 instance (Num a, Show a) => Drawable (Node a) where
-  draw (Node x y id name style) = concat
-    [ "\\node["
+  draw (Node x y id name style (t0, t1)) = concat
+    [ if t1 > 0 then "\\uncover<" ++ show t0 ++ "-" ++ show t1 ++ ">{ " else ""
+    , "\\node["
     , drop 2 $ concatMap draw style
     , "] ("
     , id
@@ -70,20 +71,28 @@ instance (Num a, Show a) => Drawable (Node a) where
     , show x
     , ", "
     , show y
-    , ") {"
-    , name
-    , "};\n"
+    , ") [align=left]{"
+    , escapeLines name
+    , "};"
+    , if t1 > 0 then " }\n" else "\n"
     ]
+    where
+      escapeLines "\n" = []
+      escapeLines ('\n':r) = "\\\\" ++ escapeLines r
+      escapeLines (a:r) = a : escapeLines r
+      escapeLines [] = []
 
 instance Drawable Edge where
-  draw (Edge n1 n2 style) = concat
-    [ "\\draw["
+  draw (Edge n1 n2 style (t0, t1)) = concat
+    [ if t1 > 0 then "\\uncover<" ++ show t0 ++ "-" ++ show t1 ++">{ " else ""
+    , "\\draw["
     , drop 2 $ concatMap draw style
     , "] ("
     , n1
     , ") edge ("
     , n2
-    , ");\n"
+    , ");"
+    , if t1 > 0 then " }\n" else "\n"
     ]
 
 instance (Num a, Show a) => Drawable (Graph a) where

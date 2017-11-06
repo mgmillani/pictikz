@@ -22,6 +22,7 @@ import Data.Matrix hiding (trace)
 import Pictikz.Geometry
 import Pictikz.Drawing
 import Pictikz.Parser
+import Pictikz.XML
 import qualified Pictikz.Graph as G
 import Data.List
 import Data.Char
@@ -30,16 +31,18 @@ import qualified Debug.Trace as D (trace)
 
 import qualified Text.XML.Light as X
 
-data Element a b = Object (Shape a) String String [b] | Line a a a a [b] | Text a a String deriving (Show, Eq)
+data Element a b = Object (Shape a) String String [b] | Line a a a a [b] | Text a a String | Layer [Element a b] deriving (Show, Eq)
 
 --  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
 isObject (Object _ _ _ _) = True
-isObject _ = False
+isObject _                = False
 isLine (Line _ _ _ _ _) = True
-isLine _ = False
+isLine _                = False
 isText (Text _ _ _) = True
-isText _ = False
+isText _            = False
+isLayer (Layer _) = True
+isLayer _         = False
 
 getStyle (Line _ _ _ _ style) = style
 getStyle (Object _ _ _ style) = style
@@ -47,7 +50,7 @@ getStyle (Object _ _ _ style) = style
 fStyle f (Line x0 y0 x1 y1 style) = Line x0 y0 x1 y1 (f style)
 fStyle f (Object s iD name style) = Object s iD name (f style)
 
-defaultText = Text 0 0 "ERROR"
+defaultText = Text 0 0 ""
 defaultRectangle = (Rectangle 0 0 0 0, "", "", [(G.Rectangle, 0)], identity 3)
 defaultEllipsis  = (Ellipsis  0 0 0 0, "", "", [(G.Circle, 0)], identity 3)
 defaultGNode = G.Node 0 0 "" ""
@@ -55,11 +58,15 @@ defaultGNode = G.Node 0 0 "" ""
 loadGraph svg colors =
   let contents = X.parseXML svg
       elements = concatMap (parseElements (identity 3)) contents
-      gnames = filter isText elements
-      gnodes = assignNames (fixGraphStyle colors (fixIDs $ filter isObject elements)) gnames
-      gedges = map (closest gnodes) $ fixGraphStyle colors $ filter isLine elements
-  in G.Graph (map (fPos (\(x,y) -> (x,-y))) (map toNode gnodes)) gedges :: G.Graph Double
+      layers = filter isLayer elements
+      layer0 = filter (not . isLayer) elements
+  in map makeGraph $ zip ((Layer layer0) : layers) [0..]
   where
+    makeGraph ((Layer elements), t) =
+      let gnames = filter isText elements
+          gnodes = assignNames (fixGraphStyle colors (fixIDs $ filter isObject elements)) gnames
+          gedges = map (closest t gnodes) $ fixGraphStyle colors $ filter isLine elements
+      in G.Graph (map (fPos (\(x,y) -> (x,-y))) (map (toNode t) gnodes)) (gedges) :: G.Graph Double
     parseElements matrix (X.Elem element)
       -- Objects
       | (X.qName $ X.elName element) `elem` ["rect"] =
@@ -72,7 +79,8 @@ loadGraph svg colors =
       | (X.qName $ X.elName element) `elem` ["defs"] = []
       | (X.qName $ X.elName element) `elem` ["g"] =
         let matrix' = foldl parseG matrix $ X.elAttribs element
-        in concatMap (parseElements (matrix * matrix') ) $ X.elContent element
+            rest = concatMap (parseElements (matrix * matrix') ) $ X.elContent element
+        in if satisfyAttrib element "id" (\v -> "layer" `isPrefixOf` (map toLower v)) then [Layer rest] else rest
       -- Edges
       | (X.qName $ X.elName element) == "path" =  [transform matrix $ foldl parseEdge (Line 0 0 0 0 []) $ X.elAttribs element]
       -- Text
@@ -125,9 +133,9 @@ loadGraph svg colors =
             style' = graphStyle fields
         in (Ellipsis x y rx ry, id, name, style ++ style', matrix)
       | otherwise = (Ellipsis x y rx ry, id, name, style, matrix)
-    toNode (Object (Rectangle x y w h) id name style) = G.Node (x + w/2) (y + h/2) id name style
-    toNode (Object (Ellipsis x y _ _)  id name style) = G.Node x y id name style
-    parseName (Text x y n) (X.Text text) = (Text x y (X.cdData text))
+    toNode t (Object (Rectangle x y w h) id name style) = G.Node (x + w/2) (y + h/2) id name style (t,t)
+    toNode t (Object (Ellipsis x y _ _)  id name style) = G.Node x y id name style (t,t)
+    parseName (Text x y n) (X.Text text) = (Text x y (n ++ X.cdData text ++ "\n"))
     parseName (Text _ _ n) (X.Elem element) =
       let (x,y, matrix) = foldl parseCoordinates (0,0, identity 3) $ X.elAttribs element
       in  foldl parseName (Text x y n) $ X.elContent element
@@ -195,12 +203,12 @@ loadGraph svg colors =
       let dist s = squareDistance (x0,y0) s
           (Object s iD _ style) = minimumBy (\(Object s0 _ _ _) (Object s1 _ _ _) -> compare (dist s0) (dist s1) ) gnodes
       in (Object s iD n style)
-    closest vertices (Line x0 y0 x1 y1 a) =
+    closest t vertices (Line x0 y0 x1 y1 a) =
       let p0 = (x0, y0)
           p1 = (x1, y1)
           (n0,_) = minimumBy (\p q -> compare (snd p) (snd q)) $ map (\(Object shape id _ _) -> (id, squareDistance p0 shape)) vertices
           (n1,_) = minimumBy (\p q -> compare (snd p) (snd q)) $ map (\(Object shape id _ _) -> (id, squareDistance p1 shape)) vertices
-      in G.Edge n0 n1 a
+      in G.Edge n0 n1 a (t,t)
 
 loadColors str = map (getColor . words) $ lines str
   where

@@ -24,6 +24,8 @@ import Pictikz.Parser
 import System.Environment
 import Data.Char
 
+import qualified Debug.Trace as D (trace)
+
 appname = "pictikz"
 appver  = "1.2.1.0"
 applicense = ", released under GPLv3"
@@ -147,7 +149,13 @@ execute action
   | inF action == "" = showHelp
   | otherwise = do
     svg <- readFile $ inF action
-    let (Graph nodes edges) = loadGraph svg (colors action)
+    let layers = filter (\(Graph n e) -> not $ null n) $ loadGraph svg (colors action)
+        bbs = map boundingBox layers
+        (x0,y0,x1,y1) = foldl1 (\(xa,ya,xb,yb) (xc,yc,xd,yd) -> (min xa xc, min ya yc, max xb xd, max yb yd)) bbs
+        w = x1 - x0
+        h = y1 - y0
+        epsilon = defaultPercent * (min w h)
+        (Graph nodes edges) = foldr1 (mergeLayers epsilon) $ layers
     (outputF action) $ Graph ((nodeF action) nodes) edges
   where
     toLatex (color, cname) = "\\definecolor{" ++ cname ++"}" ++ draw color
