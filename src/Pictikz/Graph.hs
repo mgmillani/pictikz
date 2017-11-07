@@ -49,6 +49,14 @@ instance Positionable Node where
   getPos (Node x y _ _ _ _)     = (x,y)
   fPos f (Node x y id name style time) = let (x1,y1) = f (x,y) in Node x1 y1 id name style time
 
+instance Temporal (Node a) where
+  getTime (Node _ _ _ _ _ time) = time
+  fTime f (Node x y id name style time) = (Node x y id name style (f time))
+
+instance Temporal Edge where
+  getTime (Edge _ _ _ time) = time
+  fTime f (Edge n1 n2 style time) = (Edge n1 n2 style (f time))
+
 instance Drawable Style where
   draw Dotted    = ", pictikz-dotted"
   draw Dashed    = ", pictikz-dashed"

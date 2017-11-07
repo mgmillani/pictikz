@@ -28,6 +28,10 @@ class Positionable t where
   getPos :: t a -> (a,a)
   fPos :: ((a,a) -> (a,a)) -> t a  -> t a
 
+class Temporal a where
+  getTime :: a -> (Int, Int)
+  fTime   :: ((Int, Int) -> (Int, Int)) -> a -> a
+
 instance Drawable Color where
   draw (RGB r g b) = "{RGB}{" ++ show r ++ ", "  ++ show g ++ ", " ++ show b ++ "}"
 

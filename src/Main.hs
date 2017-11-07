@@ -32,15 +32,17 @@ applicense = ", released under GPLv3"
 
 data Action a t =
   Action
-  { help      :: Bool
-  , version   :: Bool
-  , latexColors :: Bool
-  , colorFile :: FilePath
-  , colors    :: [(Color, String)]
-  , nodeF     :: [t a] -> [t a]
-  , outputF   :: Graph a -> IO ()
-  , inF       :: FilePath
-  }
+    { colorFile :: FilePath
+    , colors    :: [(Color, String)]
+    , help      :: Bool
+    , inF       :: FilePath
+    , latexColors :: Bool
+    , nodeF     :: [t a] -> [t a]
+    , outputF   :: Graph a -> IO ()
+    , startTime :: Int
+    , temporal  :: Bool
+    , version   :: Bool
+    }
 
 printGraph g = putStrLn $ draw g
 
@@ -48,14 +50,16 @@ writeGraph outF g = writeFile outF $ draw g
 
 defaultPercent = 0.2
 defaultAction = Action
-  { help = False
-  , version = False
+  { colorFile = ""
+  , colors = defaultColors
+  , help = False
+  , inF = ""
+  , latexColors = False
   , nodeF = id
   , outputF = printGraph
-  , latexColors = False
-  , inF = ""
-  , colorFile = ""
-  , colors = defaultColors
+  , startTime = 0
+  , temporal = False
+  , version = False
   } :: Action Double Node
 
 parseArgs action args = case args of
@@ -88,16 +92,22 @@ parseArgs action args = case args of
     in parseArgs (action{nodeF = (scaleToBox w h) . (nodeF action)}) r
   "-u"       :r   -> parseUniform (genGroup distanceGroup) action r
   "--uniform":r   -> parseUniform (genGroup distanceGroup) action r
+  "-t"        :r  -> parseTemporal action r
+  "--temporal":r  -> parseTemporal action r
   "-g"    :r      -> parseUniform isometricGroup action r
   "--grid":r      -> parseUniform isometricGroup action r
   f:r   -> parseArgs action{inF = f} r
   [] -> action
   where
     isFloat n = and $ map (\x -> isNumber x || x =='.') n
+    isInt n = and $ map isNumber n
     parseUniform f action [] = action{nodeF = (uniformCoordinatesBy f defaultPercent) . (nodeF action)}
     parseUniform f action (ps:r)
       | isFloat ps = parseArgs (action{nodeF = (uniformCoordinatesBy f (read ps / 100)) . (nodeF action)}) r
       | otherwise  = parseArgs (action{nodeF = (uniformCoordinatesBy f defaultPercent) . (nodeF action)}) (ps:r)
+    parseTemporal action (t0:r)
+      | isInt t0  = parseArgs (action{temporal = True, startTime = (read t0)}) r
+      | otherwise = parseArgs (action{temporal = True, startTime = 1}) (t0:r)
 
 showHelp = do
   mapM_ putStrLn $
@@ -106,18 +116,19 @@ showHelp = do
     , ""
     , "where"
     , " OPTION:"
-    , "  -c, --colours <FILE>       load colour definitions from FILE. See manpage for more information."
-    , "  -f, --fit WIDTH HEIGHT     fit coordinates into a box of size WIDTH x HEIGHT without"
+    , "  -c, --colours <FILE>       Load colour definitions from FILE. See manpage for more information."
+    , "  -f, --fit WIDTH HEIGHT     Fit coordinates into a box of size WIDTH x HEIGHT without"
     , "                               changing aspect ratio."
-    , "  -g, --grid [PERCENT]       fit coordinates into a grid (implies --uniform [PERCENT])."
+    , "  -g, --grid [PERCENT]       Fit coordinates into a grid (implies --uniform [PERCENT])."
     , "                               By default PERCENT = " ++ show (floor $ defaultPercent * 100) ++ "."
-    , "  -h, --help                 show help."
-    , "      --latex-colours        output colours in LaTeX."
-    , "  -o, --output FILE          writes output into FILE instead of stdout."
-    , "  -s, --scale WIDTH HEIGHT   scale coordinates into a box of size WIDTH x HEIGHT."
-    , "  -u, --uniform [PERCENT]    group coordinates by distance. Maximum distance for grouping"
+    , "  -h, --help                 Show help."
+    , "      --latex-colours        Output colours in LaTeX."
+    , "  -o, --output FILE          Write output into FILE instead of stdout."
+    , "  -s, --scale WIDTH HEIGHT   Scale coordinates into a box of size WIDTH x HEIGHT."
+    , "  -t, --temporal [START]     Treat SVG layers as frames, using overlay specifications in the output."
+    , "  -u, --uniform [PERCENT]    Group coordinates by distance. Maximum distance for grouping"
     , "                               is PERCENT of the axis in question."
-    , "  -v, --version              output version and exit."
+    , "  -v, --version              Output version and exit."
     ]
 
 showVersion = putStrLn $ appname ++ appver ++ applicense
@@ -154,11 +165,15 @@ execute action
         (x0,y0,x1,y1) = foldl1 (\(xa,ya,xb,yb) (xc,yc,xd,yd) -> (min xa xc, min ya yc, max xb xd, max yb yd)) bbs
         w = x1 - x0
         h = y1 - y0
-        epsilon = defaultPercent * (min w h)
-        (Graph nodes edges) = foldr1 (mergeLayers epsilon) $ layers
-    (outputF action) $ Graph ((nodeF action) nodes) edges
+        epsilon = defaultPercent * (min w h) * 0.5
+        (Graph nodes edges) = if temporal action then foldr1 (mergeLayers epsilon) layers else foldr1 (\(Graph n0 e0) (Graph n1 e1) -> Graph (n0 ++ n1) (e0 ++ e1)) layers
+        -- shift time stamps if necessary, or disable them by setting them to 0
+        nodes' = map (fTime $ if temporal action then shiftTime $ startTime action - 1 else (\x -> (0,0))) nodes
+        edges' = map (fTime $ if temporal action then shiftTime $ startTime action - 1 else (\x -> (0,0))) edges
+    (outputF action) $ Graph ((nodeF action) nodes') edges'
   where
     toLatex (color, cname) = "\\definecolor{" ++ cname ++"}" ++ draw color
+    shiftTime t (t0, t1) = (t0 + t, t1 + t)
 
 main :: IO ()
 main = do
