@@ -27,8 +27,8 @@ import Data.Char
 import qualified Debug.Trace as D (trace)
 
 appname = "pictikz"
-appver  = "1.2.1.0"
-applicense = ", released under GPLv3"
+appVersion = "1.2.2.0"
+applicense = "released under GPLv3"
 
 data Action a t =
   Action
@@ -111,7 +111,7 @@ parseArgs action args = case args of
 
 showHelp = do
   mapM_ putStrLn $
-    [ appname ++ appver ++ applicense
+    [ appname ++ " " ++ appVersion ++ ", " ++ applicense
     , "usage: pictikz [OPTION...] <FILE>"
     , ""
     , "where"
@@ -131,7 +131,7 @@ showHelp = do
     , "  -v, --version              Output version and exit."
     ]
 
-showVersion = putStrLn $ appname ++ appver ++ applicense
+showVersion = putStrLn $ appname ++ appVersion ++ applicense
 
 defaultColors =
   [ (RGB    0    0    0, "pictikz-black")

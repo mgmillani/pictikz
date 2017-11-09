@@ -1,5 +1,9 @@
 # Revision history for pictikz
 
+## 1.2.2.0  -- 2017-11-08
+
+* Added support for temporal graphs.
+
 ## 1.2.1.0  -- 2017-09-08
 
 * Fixed a bug when using a grid with a single column or row.
