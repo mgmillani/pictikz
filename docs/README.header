@@ -1,0 +1,12 @@
+![On the left side there is a sketchy handdraw grid, while on the right side it looks perfect.](example.png?raw=true "Example of what pictikz can do.")
+
+## Compiling
+
+Install `ghc` and `cabal`. Then run
+
+    cabal update
+    cabal sandbox init
+    cabal install --dependencies-only
+    cabal build
+
+This will generate the binary `picktiz` in `dist/build/pictikz/`.
