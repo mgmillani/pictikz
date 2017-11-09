@@ -1,81 +1,158 @@
 .\" Manpage for pictikz.
 .\" Contact marcelogmillani@gmail.com to correct errors or typos.
-.TH pictikz 1 "08 Sep 2017" "1.2.0.1" "pictikz man page"
+.TH pictikz 1 "2017.11.09" "1.2.2.0" "pictikz man page"
 .SH NAME
 pictikz \- a tool for converting SVG images into tikz code.
-.SH SYNOPSIS
-pictikz [OPTIONS...] FILE
-.SH DESCRIPTION
-Tikz is often used to draw graphs (i.e., networks) in LaTeX. Even though the resulting image can be very clean, manually writing tikz code can be time consuming, especially when the picture needs to be modified afterwards.
-
-On the other side of the spectrum, drawing with graphical tools like inkscape is easy, but getting a clean-looking result can be complicated.
-
-With pictikz you get the best of both worlds: You draw using a graphical tool and pictikz converts the resulting SVG file to tikz code, making some automatic style adjustments if you desire.
-.SH OPTIONS
+.SH Synopsis
+.IP
+.nf
+\f[C]
+pictikz\ [OPTIONS...]\ FILE
+\f[]
+.fi
+.SH Description
 .PP
-\fB-c, --colours FILE\fR
-.RS
-load colour definitions from FILE. See COLOURS section below.
-.RE
-\fB-f, --fit WIDTH HEIGHT\fR
-.RS
-fit coordinates into a box of size WIDTH x HEIGHT without changing aspect ratio
-.RE
-\fB-g, --grid [PERCENT]\fR
-.RS
-fit coordinates into a grid (implies --uniform [PERCENT])
-.RE
-\fB-h, --help\fR
-.RS
-shows help
-.RE
-\fB    --latex-colours\fR
-.RS
-output colours in LaTeX.
-.RE
-\fB-o, --output FILE\fR
-.RS
-writes output into FILE instead of stdout
-.RE
-\fB-s, --scale WIDTH HEIGHT\fR
-.RS
-scale coordinates into a box of size WIDTH x HEIGHT
-.RE
-\fB-u, --uniform [PERCENT]\fR
-.RS
-group coordinates by distance. Maximum distance for grouping is PERCENT of the axis in question.
-.RE
-\fB-v, --version\fR
-.RS
-outputs version and exits
-.SH CONVERSION
-Every circle and ellipse in the SVG file becomes a \\node[pictikz-node] in tikz.
-
-Every rect becomes a \\node[pictikz-rectangle].
-
-A path is converted to an edge from its initial point to its destination. Intermediary points of the path are irrelevant. The nearest nodes are used as endpoints of the edge.
-
-If the marker-end attribute of an edge is set, it is converted to \\draw[pictikz-edgeto] in tikz. The attribute marker-start produces edgefrom instead, and both together produce edgeboth.
-
-The pictikz-thick property in tikz is set if the stroke-width attribute of the path is at least 50% larger than the minimum stroke-width and larger than the average between the minimum and maximum stroke-width.
-
-An object becomes pictikz-dashed if the stroke-dasharray property is set and the length of the first dash is at least twice the stroke-width of the object. If it is set but smaller than that, the object becomes pictikz-dotted instead.
-
-Finally, text objects in SVG can become labels for nodes. For each text, the nearest node is taken.
-.SH COLOURS
-Colours can be specified in a file where each line is in one of the following formats
-
+Tikz is often used to draw graphs (i.e., networks) in LaTeX.
+Even though the resulting image can be very clean, manually writing tikz
+code can be time consuming, especially when the picture needs to be
+modified afterwards.
 .PP
-<NAME> RGB [0 - 255] [0 - 255] [0 - 255]
-.RE
-<NAME> RGB #RRGGBB
-.RE
-<NAME> RGB #RGB
-.RE
-<NAME> HSL [0 - 359] [0 - 100] [0 - 100]
-
-Values can also be specified as floats between 0 and 1. In this case, they are interpreted as a percentage of their range.
-.SH BUGS
+On the other side of the spectrum, drawing with graphical tools like
+inkscape is easy, but getting a clean\-looking result can be
+complicated.
+.PP
+With pictikz you get the best of both worlds: You draw using a graphical
+tool and pictikz converts the resulting SVG file to tikz code, making
+some automatic style adjustments if you desire.
+.SH Features
+.IP \[bu] 2
+Directed and undirected graphs.
+.IP \[bu] 2
+Coloured, dashed, dotted and bold vertices and edges.
+.IP \[bu] 2
+Temporal graphs (for beamer).
+.IP \[bu] 2
+Labels for vertices.
+.SH Options
+.PP
+\f[B]\-c, \-\-colours \f[]
+.PP
+Load colour definitions from FILE.
+See \f[I]Colours\f[] section below.
+.PP
+\f[B]\-f, \-\-fit WIDTH HEIGHT\f[]
+.PP
+Fit coordinates into a box of size WIDTH x HEIGHT without changing
+aspect ratio.
+.PP
+\f[B]\-g, \-\-grid [PERCENT]\f[]
+.PP
+Fit coordinates into a grid (implies \-\-uniform [PERCENT]).
+By default PERCENT = 20.
+.PP
+\f[B]\-h, \-\-help\f[]
+.PP
+Show help.
+.PP
+\f[B]\-\-latex\-colours\f[]
+.PP
+Output colours in LaTeX.
+.PP
+\f[B]\-o, \-\-output FILE\f[]
+.PP
+Write output into FILE instead of stdout.
+.PP
+\f[B]\-s, \-\-scale WIDTH HEIGHT\f[]
+.PP
+Scale coordinates into a box of size WIDTH x HEIGHT.
+.PP
+\f[B]\-t, \-\-temporal [START]\f[]
+.PP
+Treat SVG layers as frames, using overlay specifications in the output.
+.PP
+\f[B]\-u, \-\-uniform [PERCENT]\f[]
+.PP
+Group coordinates by distance.
+Maximum distance for grouping is PERCENT of the axis in question.
+.PP
+\f[B]\-v, \-\-version\f[]
+.PP
+Output version and exit
+.SH SVG Conversion
+.PP
+The SVG standard uses the concept of shapes in its definition.
+That is, there are circles, rectangles, lines and so on instead of
+simply pixels like bitmap formats.
+This allows a program like \f[C]pictikz\f[] to infer what a user meant
+and automatically produce a prettier output.
+.PP
+\f[C]pictikz\f[] uses its own tikz style.
+So a dashed edges receives the tikz style \f[C]pictikz\-dashed\f[]
+instead of the conventional \f[C]dashed\f[] for tikz.
+This is done in order to allow easier customization by the user.
+If you want all dashed edges to be also curved, you can do this by
+providing your own definition for \f[C]pictikz\-dashed\f[].
+A sample style is given at the examples folder.
+.SS Nodes
+.PP
+Every circle and ellipse in the SVG file becomes a \\node[pictikz\-node]
+in tikz.
+.PP
+Every rect becomes a \\node[pictikz\-rectangle].
+.PP
+Text objects in SVG can become labels for nodes.
+For each text, the nearest node is taken.
+.SS Edges
+.PP
+A path is converted to an edge from its initial point to its
+destination.
+Intermediary points of the path are irrelevant.
+The nearest nodes are used as endpoints of the edge.
+.PP
+If the marker\-end attribute of an edge is set, it is converted to
+\\draw[pictikz\-edgeto] in tikz.
+The attribute marker\-start produces edgefrom instead, and both together
+produce edgeboth.
+.PP
+The pictikz\-thick property in tikz is set if the stroke\-width
+attribute of the path is at least 50% larger than the minimum
+stroke\-width and larger than the average between the minimum and
+maximum stroke\-width.
+.PP
+An object becomes pictikz\-dashed if the stroke\-dasharray property is
+set and the length of the first dash is at least twice the stroke\-width
+of the object.
+If it is set but smaller than that, the object becomes pictikz\-dotted
+instead.
+.SS Frames
+.PP
+For temporal graphs (also known as multi\-layer graphs), SVG groups are
+used.
+Groups with an \f[C]id\f[] starting with \f[C]layer\f[] are treated as
+frames.
+The order of the frames is the same as in the file.
+Vertices which are close to each other in subsequent layers and are
+equal will be merged into one vertex.
+The same is valid for edges.
+.SH Colours
+.PP
+Colours can be specified in a file where each line is in one of the
+following formats
+.IP
+.nf
+\f[C]
+<NAME>\ RGB\ [0\ \-\ 255]\ [0\ \-\ 255]\ [0\ \-\ 255]
+<NAME>\ RGB\ #RRGGBB
+<NAME>\ RGB\ #RGB
+<NAME>\ HSL\ [0\ \-\ 359]\ [0\ \-\ 100]\ [0\ \-\ 100]
+\f[]
+.fi
+.PP
+Values can also be specified as floats between 0 and 1.
+In this case, they are interpreted as a percentage of their range.
+.SH Bugs
+.PP
 No known bugs.
-.SH AUTHOR
-Marcelo Garlet Millani (marcelogmillani@gmail.com)
+.SH Author
+.PP
+Marcelo Garlet Millani (marcelogmillani\@gmail.com)
