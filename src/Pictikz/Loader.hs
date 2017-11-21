@@ -80,7 +80,7 @@ loadGraph svg colors =
       | (X.qName $ X.elName element) `elem` ["g"] =
         let matrix' = foldl parseG matrix $ X.elAttribs element
             rest = concatMap (parseElements (matrix * matrix') ) $ X.elContent element
-        in if satisfyAttrib element "id" (\v -> "layer" `isPrefixOf` (map toLower v)) then [Layer rest] else rest
+        in if satisfyAttrib element "id" (\v -> "layer" `isPrefixOf` (map toLower v)) then [Layer rest] else if satisfyAttrib element "inkscape:groupmode" (=="layer") then [Layer rest] else rest
       -- Edges
       | (X.qName $ X.elName element) == "path" =  [transform matrix $ foldl parseEdge (Line 0 0 0 0 []) $ X.elAttribs element]
       -- Text
