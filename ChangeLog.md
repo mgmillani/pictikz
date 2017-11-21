@@ -1,5 +1,9 @@
 # Revision history for pictikz
 
+## 1.2.3.0 -- 2017.11.21
+
+* Special case for inkscape layers.
+
 ## 1.2.2.0  -- 2017-11-08
 
 * Added support for temporal graphs.
