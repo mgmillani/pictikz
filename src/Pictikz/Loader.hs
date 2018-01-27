@@ -142,7 +142,7 @@ loadGraph svg colors =
     parseName (Text x y n) (X.Text text) = (Text x y (n ++ X.cdData text ++ "\n"))
     parseName (Text _ _ n) (X.Elem element) =
       let (x,y, matrix) = foldl parseCoordinates (0,0, identity 3) $ X.elAttribs element
-      in  foldl parseName (Text x y n) $ X.elContent element
+      in  transform matrix $ foldl parseName (Text x y n) $ X.elContent element
     parseEdge (Line xa ya xb yb a) attr
       | "d" == (X.qName $ X.attrKey attr) =
         let path = parsePath $ X.attrVal attr
