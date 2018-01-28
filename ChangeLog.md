@@ -1,5 +1,9 @@
 # Revision history for pictikz
 
+## 1.2.3.1 -- 2018.01.28
+
+* Fixed a bug where transformations were not being applied to text.
+
 ## 1.2.3.0 -- 2017.11.21
 
 * Special case for inkscape layers.
