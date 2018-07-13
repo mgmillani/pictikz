@@ -4,6 +4,8 @@
 *.out
 *.snm
 *.toc
+.cabal-sandbox/
+dist/
 examples/atemporal-compact.pdf
 examples/atemporal-comparison.pdf
 examples/temporal.pdf
