@@ -9,17 +9,17 @@ TEMPORAL_SVG  = $(wildcard temporal/*.svg)
 TEMPORAL_FIGURE  = $(addprefix $(BUILD)/,$(TEMPORAL_SVG:.svg=-figure.tex))
 TEMPORAL_TEX  = $(addprefix $(BUILD)/,$(TEMPORAL_SVG:.svg=.tex))
 
-PICTIKZ=pictikz
+PICTIKZ=../dist/build/pictikz/pictikz
 
 all: atemporal-compact.pdf temporal.pdf atemporal-comparison.pdf
 
-temporal.pdf: $(BUILD)/temporal $(BUILD)/temporal.tex
+temporal.pdf: $(BUILD)/temporal ${TEMPORAL_TEX} $(BUILD)/temporal.tex
 	cd $(BUILD) && pdflatex temporal.tex && mv temporal.pdf ../
 
-atemporal-compact.pdf: $(BUILD)/atemporal ${ATEMPORAL_FIGURE} $(BUILD)/atemporal-compact.tex
+atemporal-compact.pdf: $(BUILD)/atemporal ${ATEMPORAL_FIGURE} ${ATEMPORAL_TEX} $(BUILD)/atemporal-compact.tex
 	cd $(BUILD) && pdflatex atemporal-compact.tex && mv atemporal-compact.pdf ../
 
-atemporal-comparison.pdf: $(BUILD)/atemporal ${ATEMPORAL_PDF_FIGURE} $(BUILD)/atemporal-comparison.tex
+atemporal-comparison.pdf: $(BUILD)/atemporal ${ATEMPORAL_PDF_FIGURE} ${ATEMPORAL_TEX} $(BUILD)/atemporal-comparison.tex
 	cd $(BUILD) && pdflatex atemporal-comparison.tex && mv atemporal-comparison.pdf ../
 
 $(BUILD)/temporal:
@@ -100,6 +100,6 @@ $(BUILD)/temporal/%.tex: temporal/%.svg
 	${PICTIKZ} --colours colours --temporal --grid 15 --scale 5 4 $< > $@
 
 clean:
-	rm $(BUILD)/temporal/*
-	rm $(BUILD)/atemporal/*
-	rm atemporal-compact.pdf atemporal-comparison.pdf temporal.pdf
+	rm -f $(BUILD)/temporal/*
+	rm -f $(BUILD)/atemporal/*
+	rm -f atemporal-compact.pdf atemporal-comparison.pdf temporal.pdf
