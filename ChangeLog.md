@@ -1,5 +1,9 @@
 # Revision history for pictikz
 
+## 1.3.0.0 -- 2018.07.13
+
+* Proper support for text
+  * Subscript, superscript, bold, italics, left alignment, right alignment, centered, and multiple lines.
 ## 1.2.3.1 -- 2018.01.28
 
 * Fixed a bug where transformations were not being applied to text.

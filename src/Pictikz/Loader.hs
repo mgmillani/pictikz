@@ -24,6 +24,7 @@ import Pictikz.Drawing
 import Pictikz.Parser
 import Pictikz.XML
 import qualified Pictikz.Graph as G
+import qualified Pictikz.Text  as T
 import Data.List
 import Data.Char
 import Data.Maybe
@@ -31,7 +32,12 @@ import qualified Debug.Trace as D (trace)
 
 import qualified Text.XML.Light as X
 
-data Element a b = Object (Shape a) String String [b] | Line a a a a [b] | Text a a String | Layer [Element a b] deriving (Show, Eq)
+data Element a b =
+  Object (Shape a) String [T.Text] [b]
+  | Line a a a a [b]
+--  | Text a a String
+  | Paragraph a a [T.Text] [T.Format]
+  | Layer [Element a b] deriving (Show, Eq)
 
 --  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
@@ -39,8 +45,8 @@ isObject (Object _ _ _ _) = True
 isObject _                = False
 isLine (Line _ _ _ _ _) = True
 isLine _                = False
-isText (Text _ _ _) = True
-isText _            = False
+isText (Paragraph _ _ _ _) = True
+isText _                   = False
 isLayer (Layer _) = True
 isLayer _         = False
 
@@ -50,17 +56,19 @@ getStyle (Object _ _ _ style) = style
 fStyle f (Line x0 y0 x1 y1 style) = Line x0 y0 x1 y1 (f style)
 fStyle f (Object s iD name style) = Object s iD name (f style)
 
-defaultText = Text 0 0 ""
-defaultRectangle = (Rectangle 0 0 0 0, "", "", [(G.Rectangle, 0)], identity 3)
-defaultEllipsis  = (Ellipsis  0 0 0 0, "", "", [(G.Circle, 0)], identity 3)
-defaultGNode = G.Node 0 0 "" ""
+defaultText = T.Text "" []
+defaultPar  = Paragraph 0 0 [] []
+defaultRectangle = (Rectangle 0 0 0 0, "", [], [(G.Rectangle, 0)], identity 3)
+defaultEllipsis  = (Ellipsis  0 0 0 0, "", [], [(G.Circle, 0)], identity 3)
+defaultGNode = G.Node 0 0 "" []
 
 loadGraph svg colors =
   let contents = X.parseXML svg
       elements = concatMap (parseElements (identity 3)) contents
       layers = filter isLayer elements
       layer0 = filter (not . isLayer) elements
-  in map makeGraph $ zip ((Layer layer0) : layers) [0..]
+      gr = map makeGraph $ zip ((Layer layer0) : layers) [0..]
+  in gr
   where
     makeGraph ((Layer elements), t) =
       let gnames = filter isText elements
@@ -88,7 +96,7 @@ loadGraph svg colors =
       -- Edges
       | (X.qName $ X.elName element) == "path" =  [transform matrix $ foldl parseEdge (Line 0 0 0 0 []) $ X.elAttribs element]
       -- Text
-      | (X.qName $ X.elName element) == "text" =  [transform matrix $ parseName defaultText (X.Elem element)]
+      | (X.qName $ X.elName element) == "text" = [transform matrix $ parseParagraph defaultPar (X.Elem element)]
       | otherwise = concatMap (parseElements matrix ) $ X.elContent element
     parseElements matrix _ = []
     transform matrix ( Object (Rectangle x y w h) id name style) =
@@ -106,9 +114,9 @@ loadGraph svg colors =
     transform matrix (Line x0 y0 x1 y1 a) =
       let [x0', x1', y0',y1',_, _] = toList $ matrix * (fromList 3 2 [x0,x1,y0,y1,1,1])
       in Line x0' y0' x1' y1' a
-    transform matrix (Text x y str) =
+    transform matrix (Paragraph x y text format) =
       let [x', y',_] = toList $ matrix * (fromList 3 1 [x,y,1])
-      in (Text x' y' str)
+      in (Paragraph x' y' text format)
     parseG matrix attr
       | "transform" == (X.qName $ X.attrKey attr) = matrix * (parseTransform $ X.attrVal attr)
       | otherwise = matrix
@@ -139,10 +147,51 @@ loadGraph svg colors =
       | otherwise = (Ellipsis x y rx ry, id, name, style, matrix)
     toNode t (Object (Rectangle x y w h) id name style) = G.Node (x + w/2) (y + h/2) id name style (t,t)
     toNode t (Object (Ellipsis x y _ _)  id name style) = G.Node x y id name style (t,t)
-    parseName (Text x y n) (X.Text text) = (Text x y (n ++ X.cdData text ++ "\n"))
-    parseName (Text _ _ n) (X.Elem element) =
+    -- Paragraph
+    parseParagraph (Paragraph _ _ text format) (X.Elem element) =
       let (x,y, matrix) = foldl parseCoordinates (0,0, identity 3) $ X.elAttribs element
-      in  transform matrix $ foldl parseName (Text x y n) $ X.elContent element
+          style = fromMaybe [] $ X.findAttr (X.blank_name{X.qName = "style"}) element
+          format' = parseFormat $ parseStyle style
+          text'   = concatMap (parseName defaultText y) $ X.elContent element
+      in transform matrix $ Paragraph x y (text ++ text') (format' ++ format)
+    parseName (T.Text str format) y (X.Text text) = [T.Text (str ++ X.cdData text) format]
+    parseName (T.Text str format) y (X.Elem element) =
+      let style = fromMaybe [] $ X.findAttr (X.blank_name{X.qName = "style"}) element
+          y' = fromMaybe y $ fmap read $ X.findAttr (X.blank_name{X.qName = "y"}) element
+          newline = if y' == y then "" else "\n"
+          format' = parseFormat $ parseStyle $ style
+          rs = X.elContent element
+          str' = dropWhile isSpace str
+          text' = if null str' then [] else [T.Text (newline ++ str) (format' ++ format)]
+      in if null rs then text'
+         else
+          text' ++ (map (\(T.Text s fm) -> T.Text (newline ++ s) fm) $ concatMap (parseName (T.Text "" (format' ++ format)) y') rs)
+    parseFormat [] = []
+    parseFormat ((var, val):as)
+      | var == "text-align" =
+        case val of
+          "center" -> T.Centered
+          "end"    -> T.RightAligned
+          "start"  -> T.LeftAligned
+        : parseFormat as
+      | var == "font-weight" =
+        case val of
+          "bold"   -> T.Bold : parseFormat as
+          "italic" -> T.Italics : parseFormat as
+          "normal" -> parseFormat as        
+      | var == "baseline-shift" =
+        case val of
+          "sub"   -> T.Subscript : parseFormat as
+          "super" -> T.Superscript : parseFormat as
+          "baseline" -> parseFormat as
+      | otherwise = parseFormat as
+    textStyle [] = []
+    textStyle (f:fs)
+      | f == T.Centered     = G.Centered     : textStyle fs
+      | f == T.LeftAligned  = G.LeftAligned  : textStyle fs
+      | f == T.RightAligned = G.RightAligned : textStyle fs
+      | otherwise = textStyle fs
+    -- Edge
     parseEdge (Line xa ya xb yb a) attr
       | "d" == (X.qName $ X.attrKey attr) =
         let path = parsePath $ X.attrVal attr
@@ -203,10 +252,11 @@ loadGraph svg colors =
     assignNames gnodes (t:ts) =
       let (Object s iD n style) = assignName gnodes t
       in (Object s iD n style) : assignNames (filter (\(Object _ iD1 _ _) -> iD1 /= iD) gnodes) ts
-    assignName gnodes (Text x0 y0 n) =
+    assignName gnodes (Paragraph x0 y0 text format) =
       let dist s = squareDistance (x0,y0) s
           (Object s iD _ style) = minimumBy (\(Object s0 _ _ _) (Object s1 _ _ _) -> compare (dist s0) (dist s1) ) gnodes
-      in (Object s iD n style)
+          style' = (textStyle format) ++ style
+      in (Object s iD text style')
     closest t vertices (Line x0 y0 x1 y1 a) =
       let p0 = (x0, y0)
           p1 = (x1, y1)

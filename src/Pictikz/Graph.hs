@@ -18,6 +18,7 @@
 module Pictikz.Graph where
 
 import Pictikz.Drawing
+import qualified Pictikz.Text as T
 
 data ArrowType = ArrowTo | ArrowFrom | ArrowNone | ArrowBoth deriving (Read, Eq, Ord)
 joinArrow a ArrowNone = a
@@ -34,10 +35,13 @@ data Style =
   | Circle
   | Fill String
   | Stroke String
-  | Arrow ArrowType                                      deriving (Show, Read, Eq, Ord)
-data Node a  = Node a a String String [Style] (Int, Int) deriving (Show, Read, Eq, Ord)
-data Edge    = Edge String String [Style] (Int, Int)     deriving (Show, Read, Eq, Ord)
-data Graph a = Graph [Node a] [Edge]                     deriving (Show, Read, Eq, Ord)
+  | LeftAligned
+  | RightAligned
+  | Centered
+  | Arrow ArrowType                                        deriving (Show, Read, Eq, Ord)
+data Node a  = Node a a String [T.Text] [Style] (Int, Int) deriving (Show, Read, Eq, Ord)
+data Edge    = Edge String String [Style] (Int, Int)       deriving (Show, Read, Eq, Ord)
+data Graph a = Graph [Node a] [Edge]                       deriving (Show, Read, Eq, Ord)
 
 instance Show ArrowType where
   show ArrowTo   = "pictikz-edgeto"
@@ -67,28 +71,32 @@ instance Drawable Style where
   draw (Stroke c)  = ", draw=" ++ c
   draw (Arrow ArrowNone) = ""
   draw (Arrow t) = ", " ++ show t
+  draw LeftAligned  = ", left"
+  draw RightAligned = ", right"
+  draw Centered     = ", center"
 
 instance (Num a, Show a) => Drawable (Node a) where
   draw (Node x y id name style (t0, t1)) = concat
     [ if t1 > 0 then "\\uncover<" ++ show t0 ++ "-" ++ show t1 ++ ">{ " else ""
     , "\\node["
-    , drop 2 $ concatMap draw style
+    , drop 2 $ concatMap draw $ filter (\s -> not $ s `elem` [LeftAligned, Centered, RightAligned]) style
     , "] ("
     , id
     , ") at ("
     , show x
     , ", "
     , show y
-    , ") [align=left]{"
-    , escapeLines name
+    , ") [align=" ++ (drop 2 $ draw alignment) ++ "]{"
+    , escapeLines $ concatMap draw name
     , "};"
     , if t1 > 0 then " }\n" else "\n"
     ]
     where
       escapeLines "\n" = []
-      escapeLines ('\n':r) = "\\\\" ++ escapeLines r
+      escapeLines ('\n':r) = "\\\\ " ++ escapeLines r
       escapeLines (a:r) = a : escapeLines r
       escapeLines [] = []
+      alignment = head $ filter (\f -> f `elem` [LeftAligned, RightAligned, Centered]) (style ++ [LeftAligned])
 
 instance Drawable Edge where
   draw (Edge n1 n2 style (t0, t1)) = concat

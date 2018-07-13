@@ -27,7 +27,7 @@ import Data.Char
 import qualified Debug.Trace as D (trace)
 
 appname = "pictikz"
-appVersion = "1.2.3.1"
+appVersion = "1.3.0.0"
 applicense = "released under GPLv3"
 
 data Action a t =
