@@ -190,12 +190,13 @@ parsePath path = evalState parsePath' path
         case first of
           Left p  -> return [p]
           Right p -> return [p]
+      | otherwise = error $ "Unknown command '" ++ cmd ++ "' found when parsing line."
     --  coordPair :: Floating a => State String (a, a)
     coordPair = do
       consumeWhile (\x -> x `elem` " \t,")
-      x <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))
+      x <- consumeWhile ((\x -> x == 'e' || (not $ x `elem` " \t," || isAlpha x)))
       consumeWhile (\x -> x `elem` " \t,")
-      y <- consumeWhile ((\x -> not $ x `elem` " \t," || isAlpha x))
+      y <- consumeWhile ((\x -> x == 'e' || (not $ x `elem` " \t," || isAlpha x)))
       return $ (read x, read y)
     command :: State String String
     command = do
