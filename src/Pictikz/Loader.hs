@@ -14,7 +14,7 @@
 --  You should have received a copy of the GNU General Public License
 --  along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
 
-module Pictikz.Loader (loadGraph, loadColors) where
+module Pictikz.Loader (loadGraph, loadColors, renameNodes, Element) where
 
 --  import Prelude hiding (read)
 --  import qualified Prelude as P (read)
@@ -62,9 +62,25 @@ defaultRectangle = (Rectangle 0 0 0 0, "", [], [(G.Rectangle, 0)], identity 3)
 defaultEllipsis  = (Ellipsis  0 0 0 0, "", [], [(G.Circle, 0)], identity 3)
 defaultGNode = G.Node 0 0 "" []
 
-loadGraph svg colors =
+renameNodes elements = fst $ renameNodes' elements 1
+  where
+    renameNodes' [] i = ([], i)
+    renameNodes' (e:es) i =
+      case e of
+        Object shape iD name style ->
+          let (rs, n) = renameNodes' es (i+1)
+          in (Object shape ("v" ++ show i) name style : rs, n)
+        Layer ls ->
+          let (rs, i')  = renameNodes' es i
+              (ls', n) = renameNodes' ls i'
+          in ((Layer ls') : rs, n)
+        x ->
+          let (rs, n) = renameNodes' es i
+          in (x : rs, n)
+
+loadGraph svg colors preprocess =
   let contents = X.parseXML svg
-      elements = concatMap (parseElements (identity 3)) contents
+      elements = preprocess $ concatMap (parseElements (identity 3)) contents
       layers = filter isLayer elements
       layer0 = filter (not . isLayer) elements
       gr = map makeGraph $ zip ((Layer layer0) : layers) [0..]

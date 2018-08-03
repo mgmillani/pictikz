@@ -93,6 +93,19 @@ scaleToBox w h objects =
       scaley = if scaley' == 0 then 1 else scaley'
   in map (fPos (\(x,y) -> ((x + shiftx) * w/scalex, (y + shifty) * h/scaley)))  objects
 
+-- | Reposition objects such that the minimum distance in x-axis equals x (and the analog for the y-axis).
+minDist xd yd objects =
+  let positions = map getPos objects
+      xs = sort $ map fst positions
+      ys = sort $ map snd positions
+      shiftx = - minimum xs
+      shifty = - minimum ys
+      minDistXs = filter (/= 0.0) $ zipWith (\x0 x1 -> abs $ x0 - x1) xs (tail xs)
+      minDistYs = filter (/= 0.0) $ zipWith (\y0 y1 -> abs $ y0 - y1) ys (tail ys)
+      mdX = if null minDistXs then xd else minimum minDistXs
+      mdY = if null minDistYs then yd else minimum minDistYs
+  in map (fPos (\(x,y) -> (xd * (x + shiftx) / mdX, yd * (y + shifty) / mdY))) objects
+
 average xs = realToFrac (sum xs) / genericLength xs
 
 -- | Organizes nodes in a way that the amount of x and y coordinates used is decreased.

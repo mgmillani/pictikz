@@ -27,21 +27,22 @@ import Data.Char
 import qualified Debug.Trace as D (trace)
 
 appname = "pictikz"
-appVersion = "1.3.0.0"
+appVersion = "1.4.0.0"
 applicense = "released under GPLv3"
 
-data Action a t =
+data Action a b t =
   Action
-    { colorFile :: FilePath
-    , colors    :: [(Color, String)]
-    , help      :: Bool
-    , inF       :: FilePath
+    { colorFile   :: FilePath
+    , colors      :: [(Color, String)]
+    , help        :: Bool
+    , inF         :: FilePath
     , latexColors :: Bool
-    , nodeF     :: [t a] -> [t a]
-    , outputF   :: Graph a -> IO ()
-    , startTime :: Int
-    , temporal  :: Bool
-    , version   :: Bool
+    , nodeF       :: [t a] -> [t a]
+    , outputF     :: Graph a -> IO ()
+    , startTime   :: Int
+    , temporal    :: Bool
+    , version     :: Bool
+    , preprocessF :: [Element a b] -> [Element a b]
     }
 
 printGraph g = putStrLn $ draw g
@@ -60,7 +61,8 @@ defaultAction = Action
   , startTime = 0
   , temporal = False
   , version = False
-  } :: Action Double Node
+  , preprocessF = renameNodes
+  } :: Action Double (Style, Double) Node
 
 parseArgs action args = case args of
   "-c"       :f:r -> parseArgs (action{colorFile = f}) r
@@ -80,8 +82,14 @@ parseArgs action args = case args of
     let w = read ws
         h = read hs
     in parseArgs (action{nodeF = (fitToBox w h) . (nodeF action)}) r
+  "--min-dist":xs:ys:r ->
+    let x = read xs
+        y = read ys
+    in parseArgs (action{nodeF = (minDist x y) . (nodeF action)}) r
   "--latex-colours":r -> parseArgs action{latexColors = True} r
   "--latex-colors" :r -> parseArgs action{latexColors = True} r
+  "--rename":r    -> parseArgs action{preprocessF = renameNodes} r
+  "--no-rename":r -> parseArgs action{preprocessF = id} r
   "-s"     :ws:hs:r  ->
     let w = read ws
         h = read hs
@@ -116,19 +124,23 @@ showHelp = do
     , ""
     , "where"
     , " OPTION:"
-    , "  -c, --colours <FILE>       Load colour definitions from FILE. See manpage for more information."
-    , "  -f, --fit WIDTH HEIGHT     Fit coordinates into a box of size WIDTH x HEIGHT without"
-    , "                               changing aspect ratio."
-    , "  -g, --grid [PERCENT]       Fit coordinates into a grid (implies --uniform [PERCENT])."
-    , "                               By default PERCENT = " ++ show (floor $ defaultPercent * 100) ++ "."
-    , "  -h, --help                 Show help."
-    , "      --latex-colours        Output colours in LaTeX."
-    , "  -o, --output FILE          Write output into FILE instead of stdout."
-    , "  -s, --scale WIDTH HEIGHT   Scale coordinates into a box of size WIDTH x HEIGHT."
-    , "  -t, --temporal [START]     Treat SVG layers as frames, using overlay specifications in the output."
-    , "  -u, --uniform [PERCENT]    Group coordinates by distance. Maximum distance for grouping"
-    , "                               is PERCENT of the axis in question."
-    , "  -v, --version              Output version and exit."
+    , "  -c, --colours <FILE>         Load colour definitions from FILE. See manpage for more information."
+    , "  -f, --fit WIDTH HEIGHT       Fit coordinates into a box of size WIDTH x HEIGHT without"
+    , "                             changing aspect ratio."
+    , "  -g, --grid [PERCENT]         Fit coordinates into a grid (implies --uniform [PERCENT])."
+    , "                             By default PERCENT = " ++ show (floor $ defaultPercent * 100) ++ "."
+    , "  -h, --help                   Show help."
+    , "      --latex-colours          Output colours in LaTeX."
+    , "      --min-dist X Y           Scale coordinates such that the minimum distance in the x-axis is X"
+    , "                             and the minimum distance in the y-axis is Y."
+    , "  -o, --output FILE            Write output into FILE instead of stdout."
+    , "      --rename                 Rename vertices to v1, v2,... (default)."
+    , "      --no-rename              Do not rename vertices, using the same IDs as in the SVG file."
+    , "  -s, --scale WIDTH HEIGHT     Scale coordinates into a box of size WIDTH x HEIGHT."
+    , "  -t, --temporal [START]       Treat SVG layers as frames, using overlay specifications in the output."
+    , "  -u, --uniform [PERCENT]      Group coordinates by distance. Maximum distance for grouping"
+    , "                             is PERCENT of the axis in question."
+    , "  -v, --version                Output version and exit."
     ]
 
 showVersion = putStrLn $ appname ++ appVersion ++ applicense
@@ -160,7 +172,7 @@ execute action
   | inF action == "" = showHelp
   | otherwise = do
     svg <- readFile $ inF action
-    let layers = filter (\(Graph n e) -> not $ null n) $ loadGraph svg (colors action)
+    let layers = filter (\(Graph n e) -> not $ null n) $ loadGraph svg (colors action) (preprocessF action)
         bbs = map boundingBox layers
         (x0,y0,x1,y1) = foldl1 (\(xa,ya,xb,yb) (xc,yc,xd,yd) -> (min xa xc, min ya yc, max xb xd, max yb yd)) bbs
         w = x1 - x0
@@ -178,5 +190,5 @@ execute action
 main :: IO ()
 main = do
   args <- getArgs
-  let action = parseArgs defaultAction args :: Action Double Node
+  let action = parseArgs defaultAction args :: Action Double (Style, Double) Node
   execute action
