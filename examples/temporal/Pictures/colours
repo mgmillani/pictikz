@@ -1,0 +1,12 @@
+pictikz-black       RGB 0.0  0.0  0.0
+pictikz-white       RGB 255  255  255
+pictikz-gray        HSL 1.0  0.0  0.5
+pictikz-red         RGB #FF5353
+pictikz-green       RGB 101  237  101
+pictikz-blue        RGB 123  168  255
+pictikz-yellow      RGB 246  246   82
+pictikz-cyan        RGB  87  239  239
+pictikz-purple      RGB 225  103  255
+pictikz-light-green RGB 178  255   66
+pictikz-orange      RGB 255  166   61
+pictikz-pink        RGB 255  141  255

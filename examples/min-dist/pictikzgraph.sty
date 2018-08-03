@@ -1,0 +1,55 @@
+\ProvidesPackage{pictikzgraph}[2017/09/03 v1.1]
+
+\tikzset{
+	pictikz-node/.style={
+		inner sep=1.0pt,
+		circle,
+		draw,
+		radius=3pt,
+		minimum size=6pt
+	},
+	pictikz-rectangle/.style={
+		rectangle,
+		draw,
+		inner sep=3pt,
+		minimum width=2cm
+	},
+	pictikz-edgeto/.style={
+		->,
+		shorten <=2pt,
+		shorten >=2pt,
+	},
+	pictikz-edgeboth/.style={
+		<->,
+		shorten <=2pt,
+		shorten >=2pt,
+	},
+	pictikz-edgefrom/.style={
+		<-,
+		shorten <=2pt,
+		shorten >=2pt,
+	},
+	pictikz-thick/.style={
+		very thick
+	},
+	pictikz-dashed/.style={
+		thick,
+		dashed,
+	},
+	pictikz-dotted/.style={
+		thick,
+		dotted,
+	}
+}
+\definecolor{pictikz-black}{RGB}{0, 0, 0}
+\definecolor{pictikz-white}{RGB}{255, 255, 255}
+\definecolor{pictikz-gray}{RGB}{128, 128, 128}
+\definecolor{pictikz-red}{RGB}{255, 83, 83}
+\definecolor{pictikz-green}{RGB}{101, 237, 101}
+\definecolor{pictikz-blue}{RGB}{123, 168, 255}
+\definecolor{pictikz-yellow}{RGB}{246, 246, 82}
+\definecolor{pictikz-cyan}{RGB}{87, 239, 239}
+\definecolor{pictikz-purple}{RGB}{225, 103, 255}
+\definecolor{pictikz-light-green}{RGB}{178, 255, 66}
+\definecolor{pictikz-orange}{RGB}{255, 166, 61}
+\definecolor{pictikz-pink}{RGB}{255, 141, 255}
