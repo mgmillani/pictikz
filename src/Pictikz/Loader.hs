@@ -14,7 +14,7 @@
 --  You should have received a copy of the GNU General Public License
 --  along with pictikz.  If not, see <http://www.gnu.org/licenses/>.
 
-module Pictikz.Loader (loadGraph, loadColors, renameNodes, Element) where
+module Pictikz.Loader (loadGraph, loadColors, renameNodes, textAsNodes, Element) where
 
 --  import Prelude hiding (read)
 --  import qualified Prelude as P (read)
@@ -32,12 +32,14 @@ import qualified Debug.Trace as D (trace)
 
 import qualified Text.XML.Light as X
 
-data Element a b =
-  Object (Shape a) String [T.Text] [b]
-  | Line a a a a [b]
---  | Text a a String
-  | Paragraph a a [T.Text] [T.Format]
-  | Layer [Element a b] deriving (Show, Eq)
+data Style = RawTextStyle T.Format | RawGraphStyle G.Style Double  | Parsed G.Style deriving (Show, Eq, Read)
+
+-- TODO: replace b with Style
+data Element a =
+  Object (Shape a) String [T.Text] [Style]
+  | Line a a a a [Style]
+  | Paragraph a a [T.Text] [Style]
+  | Layer [Element a] deriving (Show, Eq)
 
 --  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
@@ -58,9 +60,25 @@ fStyle f (Object s iD name style) = Object s iD name (f style)
 
 defaultText = T.Text "" []
 defaultPar  = Paragraph 0 0 [] []
-defaultRectangle = (Rectangle 0 0 0 0, "", [], [(G.Rectangle, 0)], identity 3)
-defaultEllipsis  = (Ellipsis  0 0 0 0, "", [], [(G.Circle, 0)], identity 3)
+defaultRectangle = (Rectangle 0 0 0 0, "", [], [RawGraphStyle G.Rectangle 0], identity 3)
+defaultEllipsis  = (Ellipsis  0 0 0 0, "", [], [RawGraphStyle G.Circle    0], identity 3)
 defaultGNode = G.Node 0 0 "" []
+
+textAsNodes elements = fst $ textAsNodes' elements 1
+  where
+    textAsNodes' [] i = ([], i)
+    textAsNodes' (e:es) i =
+      case e of
+        Paragraph x y ts format ->
+          let (rs, n) = textAsNodes' es (i+1)
+          in ((Object (Rectangle x y 1 1) ("text-" ++ show i) ts format) : rs, n)
+        Layer ls ->
+          let (rs, i')  = textAsNodes' es i
+              (ls', n) = textAsNodes' ls i'
+          in ((Layer ls') : rs, n)
+        x ->
+          let (rs, n) = textAsNodes' es i
+          in (x : rs, n)
 
 renameNodes elements = fst $ renameNodes' elements 1
   where
@@ -77,6 +95,13 @@ renameNodes elements = fst $ renameNodes' elements 1
         x ->
           let (rs, n) = renameNodes' es i
           in (x : rs, n)
+
+graphStyle s = case s of
+  Parsed s' -> s'
+  RawTextStyle T.Centered     -> G.Centered
+  RawTextStyle T.LeftAligned  -> G.LeftAligned
+  RawTextStyle T.RightAligned -> G.RightAligned
+  RawGraphStyle s' _ -> s'
 
 loadGraph svg colors preprocess =
   let contents = X.parseXML svg
@@ -145,7 +170,7 @@ loadGraph svg colors preprocess =
       | "transform"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr ) h, id, name, style, matrix * (parseTransform $ X.attrVal attr))
       | "style"      == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
-            style' = graphStyle fields
+            style' = rawGraphStyle fields
         in (Rectangle x y w h, id, name, style ++ style', matrix)
       | otherwise = (Rectangle x y w h, id, name, style, matrix)
     parseEllipsis (Ellipsis x y rx ry, id, name, style, matrix) attr
@@ -158,16 +183,16 @@ loadGraph svg colors preprocess =
       | "transform"  == (X.qName $ X.attrKey attr) = (Ellipsis x y rx ry, id, name, style, matrix * (parseTransform $ X.attrVal attr))
       | "style"      == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
-            style' = graphStyle fields
+            style' = rawGraphStyle fields
         in (Ellipsis x y rx ry, id, name, style ++ style', matrix)
       | otherwise = (Ellipsis x y rx ry, id, name, style, matrix)
-    toNode t (Object (Rectangle x y w h) id name style) = G.Node (x + w/2) (y + h/2) id name style (t,t)
-    toNode t (Object (Ellipsis x y _ _)  id name style) = G.Node x y id name style (t,t)
+    toNode t (Object (Rectangle x y w h) id name style) = G.Node (x + w/2) (y + h/2) id name (map graphStyle style) (t,t)
+    toNode t (Object (Ellipsis x y _ _)  id name style) = G.Node x y id name (map graphStyle style) (t,t)
     -- Paragraph
     parseParagraph (Paragraph _ _ text format) (X.Elem element) =
       let (x,y, matrix) = foldl parseCoordinates (0,0, identity 3) $ X.elAttribs element
           style = fromMaybe [] $ X.findAttr (X.blank_name{X.qName = "style"}) element
-          format' = parseFormat $ parseStyle style
+          format' = map RawTextStyle $ parseFormat $ parseStyle style
           text'   = concatMap (parseName defaultText y) $ X.elContent element
       in transform matrix $ Paragraph x y (text ++ text') (format' ++ format)
     parseName (T.Text str format) y (X.Text text) = [T.Text (str ++ X.cdData text) format]
@@ -201,12 +226,6 @@ loadGraph svg colors preprocess =
           "super" -> T.Superscript : parseFormat as
           "baseline" -> parseFormat as
       | otherwise = parseFormat as
-    textStyle [] = []
-    textStyle (f:fs)
-      | f == T.Centered     = G.Centered     : textStyle fs
-      | f == T.LeftAligned  = G.LeftAligned  : textStyle fs
-      | f == T.RightAligned = G.RightAligned : textStyle fs
-      | otherwise = textStyle fs
     -- Edge
     parseEdge (Line xa ya xb yb a) attr
       | "d" == (X.qName $ X.attrKey attr) =
@@ -215,46 +234,46 @@ loadGraph svg colors preprocess =
         in Line x0 y0 x1 y1 a
       | "style"        == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
-            style = graphStyle fields
+            style = rawGraphStyle fields
         in Line xa ya xb yb style
       | otherwise = Line xa ya xb yb a
-    graphStyle :: (Read a, Floating a) => [(String, String)] -> [(G.Style, a)]
-    graphStyle [] = []
-    graphStyle (x:xs) = case x of
-      ("marker-end", "none")        -> (G.Arrow G.ArrowNone, undefined) : graphStyle xs
-      ("marker-end", _)             -> (G.Arrow G.ArrowTo,   undefined) : graphStyle xs
-      ("marker-start", "none")      -> (G.Arrow G.ArrowNone, undefined) : graphStyle xs
-      ("marker-start", _)           -> (G.Arrow G.ArrowFrom, undefined) : graphStyle xs
-      ("fill", "none")              -> graphStyle xs
-      ("fill", color)               -> (G.Fill color,  undefined) : graphStyle xs
-      ("stroke", "none")            -> graphStyle xs
-      ("stroke", color)             -> (G.Stroke color,  undefined) : graphStyle xs
-      ("stroke-width", len)         -> (G.Thick, (readLength len)) : graphStyle xs
-      ("stroke-dasharray", "none")  -> graphStyle xs
-      ("stroke-dasharray", dashes)  -> let dash = takeWhile (/=',') dashes in (G.Dashed, (read dash)) : graphStyle xs
-      _ -> graphStyle xs
-    fixGraphStyle :: (Ord a, Floating a) => [(Color, String)] -> [Element a (G.Style, a)] -> [Element a G.Style]
+    rawGraphStyle :: [(String, String)] -> [Style]
+    rawGraphStyle [] = []
+    rawGraphStyle (x:xs) = case x of
+      ("marker-end", "none")        -> RawGraphStyle (G.Arrow G.ArrowNone) undefined : rawGraphStyle xs
+      ("marker-end", _)             -> RawGraphStyle (G.Arrow G.ArrowTo)   undefined : rawGraphStyle xs
+      ("marker-start", "none")      -> RawGraphStyle (G.Arrow G.ArrowNone) undefined : rawGraphStyle xs
+      ("marker-start", _)           -> RawGraphStyle (G.Arrow G.ArrowFrom) undefined : rawGraphStyle xs
+      ("fill", "none")              -> rawGraphStyle xs
+      ("fill", color)               -> RawGraphStyle (G.Fill color)        undefined : rawGraphStyle xs
+      ("stroke", "none")            -> rawGraphStyle xs
+      ("stroke", color)             -> RawGraphStyle (G.Stroke color)      undefined : rawGraphStyle xs
+      ("stroke-width", len)         -> RawGraphStyle G.Thick        (readLength len) : rawGraphStyle xs
+      ("stroke-dasharray", "none")  -> rawGraphStyle xs
+      ("stroke-dasharray", dashes)  -> let dash = takeWhile (/=',') dashes in RawGraphStyle G.Dashed (read dash) : rawGraphStyle xs
+      _ -> rawGraphStyle xs
+    fixGraphStyle :: (Ord a, Floating a) => [(Color, String)] -> [Element a] -> [Element a]
     fixGraphStyle colors ls =
-      let strokeWs = map snd $ filter (\(s,v) -> s == G.Thick) $ concatMap getStyle ls
+      let strokeWs = map (\(RawGraphStyle s v) -> v) $ filter (\(RawGraphStyle s v) -> s == G.Thick) $ concatMap getStyle ls
           minStroke = minimum strokeWs
           maxStroke = maximum strokeWs
           midStroke = minStroke + (maxStroke - minStroke) / 2
-          fixLine arrow [] = [G.Arrow arrow]
+          fixLine arrow [] = [Parsed $ G.Arrow arrow]
           fixLine arrow (s:ss) = case s of
-            (G.Thick, v)   -> if v > midStroke && v > minStroke * 1.4 then G.Thick : fixLine arrow ss else (fixLine arrow ss)
-            (G.Dashed, v)  -> (if v > 2*minStroke then G.Dashed else G.Dotted) : (fixLine arrow ss)
-            (G.Arrow a, _) -> fixLine (G.joinArrow a arrow) ss
-            (G.Fill c, _)  ->
+            RawGraphStyle G.Thick v   -> if v > midStroke && v > minStroke * 1.4 then Parsed G.Thick : fixLine arrow ss else (fixLine arrow ss)
+            RawGraphStyle  G.Dashed    v -> (Parsed $ if v > 2*minStroke then G.Dashed else G.Dotted) : (fixLine arrow ss)
+            RawGraphStyle (G.Arrow  a) _ -> fixLine (G.joinArrow a arrow) ss
+            RawGraphStyle (G.Fill   c) _ ->
               let color = readColor c
                   dists = map (\(c', n) -> (rgbDist c' color, n)) colors
                   (_, cname) = minimumBy (\(c0, _) (c1, _) -> compare c0 c1) dists
-              in G.Fill cname : fixLine arrow ss
-            (G.Stroke c, _)  ->
+              in Parsed (G.Fill cname) : fixLine arrow ss
+            RawGraphStyle (G.Stroke c) _ ->
               let color = readColor c
                   dists = map (\(c', n) -> (rgbDist c' color, n)) colors
                   (_, cname) = minimumBy (\(c0, _) (c1, _) -> compare c0 c1) dists
-              in G.Stroke cname : fixLine arrow ss
-            (s, _) -> s : (fixLine arrow ss)
+              in Parsed (G.Stroke cname) : fixLine arrow ss
+            RawGraphStyle s  _ -> Parsed s : (fixLine arrow ss)
       in map (fStyle (fixLine G.ArrowNone)) ls
       --in map (\(Line x0 y0 x1 y1 s) -> Line x0 y0 x1 y1 (fixLine G.ArrowNone s)) ls
     parseCoordinates (x,y, matrix) attr
@@ -271,14 +290,14 @@ loadGraph svg colors preprocess =
     assignName gnodes (Paragraph x0 y0 text format) =
       let dist s = squareDistance (x0,y0) s
           (Object s iD _ style) = minimumBy (\(Object s0 _ _ _) (Object s1 _ _ _) -> compare (dist s0) (dist s1) ) gnodes
-          style' = (textStyle format) ++ style
+          style' = format ++ style
       in (Object s iD text style')
     closest t vertices (Line x0 y0 x1 y1 a) =
       let p0 = (x0, y0)
           p1 = (x1, y1)
           (n0,_) = minimumBy (\p q -> compare (snd p) (snd q)) $ map (\(Object shape id _ _) -> (id, squareDistance p0 shape)) vertices
           (n1,_) = minimumBy (\p q -> compare (snd p) (snd q)) $ map (\(Object shape id _ _) -> (id, squareDistance p1 shape)) vertices
-      in G.Edge n0 n1 a (t,t)
+      in G.Edge n0 n1 (map graphStyle a) (t,t)
 
 loadColors str = map (getColor . words) $ lines str
   where

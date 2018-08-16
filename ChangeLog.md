@@ -1,5 +1,8 @@
 # Revision history for pictikz
 
+## 1.5.0.0 -- 2018.08.16
+* Treat text as individual nodes (option --text-as-nodes).
+
 ## 1.4.0.0 -- 2018.08.03
 * Organize vertices by setting a minimal distance (option --min-dist).
 * Rename vertices.

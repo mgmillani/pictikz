@@ -1,6 +1,6 @@
 .\" Manpage for pictikz.
 .\" Contact marcelogmillani@gmail.com to correct errors or typos.
-.TH pictikz 1 "2018.08.03" "1.4.0.0" "pictikz man page"
+.TH pictikz 1 "2018.08.16" "1.5.0.0" "pictikz man page"
 .SH NAME
 pictikz \- a tool for converting SVG images into tikz code.
 .SH Synopsis
@@ -35,60 +35,64 @@ Temporal graphs (for beamer).
 Labels for vertices.
 .SH Options
 .PP
-\f[B]\-c, \[en]colours \f[]
+\f[B]\f[BC]\-c,\ \-\-colours\ <FILE>\f[B]\f[]
 .PP
 Load colour definitions from FILE.
 See \f[I]Colours\f[] section below.
 .PP
-\f[B]\-f, \[en]fit WIDTH HEIGHT\f[]
+\f[B]\f[BC]\-f,\ \-\-fit\ WIDTH\ HEIGHT\f[B]\f[]
 .PP
 Fit coordinates into a box of size WIDTH x HEIGHT without changing
 aspect ratio.
 .PP
-\f[B]\-g, \[en]grid [PERCENT]\f[]
+\f[B]\f[BC]\-g,\ \-\-grid\ [PERCENT]\f[B]\f[]
 .PP
 Fit coordinates into a grid (implies \[en]uniform [PERCENT]).
 By default PERCENT = 20.
 .PP
-\f[B]\-h, \[en]help\f[]
+\f[B]\f[BC]\-h,\ \-\-help\f[B]\f[]
 .PP
 Show help.
 .PP
-\f[B]\[en]latex\-colours\f[]
+\f[B]\f[BC]\-\-latex\-colours\f[B]\f[]
 .PP
 Output colours in LaTeX.
 .PP
-\f[B]\[en]min\-dist X Y\f[]
+\f[B]\f[BC]\-\-min\-dist\ X\ Y\f[B]\f[]
 .PP
 Scale coordinates such that the minimum distance in the x\-axis is X and
 the minimum distance in the y\-axis is Y.
 .PP
-\f[B]\-o, \[en]output FILE\f[]
+\f[B]\f[BC]\-o,\ \-\-output\ FILE\f[B]\f[]
 .PP
 Write output into FILE instead of stdout.
 .PP
-\f[B]\[en]rename\f[]
+\f[B]\f[BC]\-\-rename\f[B]\f[]
 .PP
 Rename vertices to v1, v2,\&... (default)
 .PP
-\f[B]\[en]no\-rename\f[]
+\f[B]\f[BC]\-\-no\-rename\f[B]\f[]
 .PP
 Do not rename vertices, using the same IDs as in the SVG file.
 .PP
-\f[B]\-s, \[en]scale WIDTH HEIGHT\f[]
+\f[B]\f[BC]\-s,\ \-\-scale\ WIDTH\ HEIGHT\f[B]\f[]
 .PP
 Scale coordinates into a box of size WIDTH x HEIGHT.
 .PP
-\f[B]\-t, \[en]temporal [START]\f[]
+\f[B]\f[BC]\-t,\ \-\-temporal\ [START]\f[B]\f[]
 .PP
 Treat SVG layers as frames, using overlay specifications in the output.
 .PP
-\f[B]\-u, \[en]uniform [PERCENT]\f[]
+\f[B]\f[BC]\-\-text\-as\-nodes\f[B]\f[]
+.PP
+Treat text as individual nodes instead of labels.
+.PP
+\f[B]\f[BC]\-u,\ \-\-uniform\ [PERCENT]\f[B]\f[]
 .PP
 Group coordinates by distance.
 Maximum distance for grouping is PERCENT of the axis in question.
 .PP
-\f[B]\-v, \[en]version\f[]
+\f[B]\f[BC]\-v,\ \-\-version\f[B]\f[]
 .PP
 Output version and exit
 .SH SVG Conversion

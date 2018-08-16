@@ -10,6 +10,7 @@ Install `ghc` and `cabal`. Then run
     cabal build
 
 This will generate the binary `picktiz` in `dist/build/pictikz/`.
+
 # Synopsis
 
     pictikz [OPTIONS...] FILE
@@ -31,43 +32,59 @@ With pictikz you get the best of both worlds: You draw using a graphical tool an
 
 # Options
 
-  **-c, --colours <FILE>**
+  **`-c, --colours <FILE>`**
 
   Load colour definitions from FILE. See *Colours* section below.
 
-  **-f, --fit WIDTH HEIGHT**
+  **`-f, --fit WIDTH HEIGHT`**
 
   Fit coordinates into a box of size WIDTH x HEIGHT without changing aspect ratio.
 
-  **-g, --grid [PERCENT]**
+  **`-g, --grid [PERCENT]`**
 
   Fit coordinates into a grid (implies --uniform [PERCENT]). By default PERCENT = 20.
 
-  **-h, --help**
+  **`-h, --help`**
 
   Show help.
 
-  **--latex-colours**
+  **`--latex-colours`**
 
   Output colours in LaTeX.
 
-  **-o, --output FILE**
+  **`--min-dist X Y`**
+
+  Scale coordinates such that the minimum distance in the x-axis is X and the minimum distance in the y-axis is Y.
+  
+  **`-o, --output FILE`**
 
   Write output into FILE instead of stdout.
 
-  **-s, --scale WIDTH HEIGHT**
+  **`--rename`**
+
+  Rename vertices to v1, v2,... (default)
+
+  **`--no-rename`**
+
+  Do not rename vertices, using the same IDs as in the SVG file.
+
+  **`-s, --scale WIDTH HEIGHT`**
 
   Scale coordinates into a box of size WIDTH x HEIGHT.
 
-  **-t, --temporal [START]**
+  **`-t, --temporal [START]`**
 
   Treat SVG layers as frames, using overlay specifications in the output.
 
-  **-u, --uniform [PERCENT]**
+  **`   --text-as-nodes`**
+
+  Treat text as individual nodes instead of labels.
+
+  **`-u, --uniform [PERCENT]`**
 
   Group coordinates by distance. Maximum distance for grouping is PERCENT of the axis in question.
 
-  **-v, --version**
+  **`-v, --version`**
 
   Output version and exit
 

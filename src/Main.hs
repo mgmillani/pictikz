@@ -27,10 +27,10 @@ import Data.Char
 import qualified Debug.Trace as D (trace)
 
 appname = "pictikz"
-appVersion = "1.4.0.0"
+appVersion = "1.5.0.0"
 applicense = "released under GPLv3"
 
-data Action a b t =
+data Action a t =
   Action
     { colorFile   :: FilePath
     , colors      :: [(Color, String)]
@@ -39,10 +39,10 @@ data Action a b t =
     , latexColors :: Bool
     , nodeF       :: [t a] -> [t a]
     , outputF     :: Graph a -> IO ()
+    , preprocessF :: [Element a] -> [Element a]
     , startTime   :: Int
     , temporal    :: Bool
     , version     :: Bool
-    , preprocessF :: [Element a b] -> [Element a b]
     }
 
 printGraph g = putStrLn $ draw g
@@ -58,11 +58,11 @@ defaultAction = Action
   , latexColors = False
   , nodeF = id
   , outputF = printGraph
+  , preprocessF = renameNodes
   , startTime = 0
   , temporal = False
-  , version = False
-  , preprocessF = renameNodes
-  } :: Action Double (Style, Double) Node
+  , version = False  
+  } :: Action Double Node
 
 parseArgs action args = case args of
   "-c"       :f:r -> parseArgs (action{colorFile = f}) r
@@ -98,6 +98,7 @@ parseArgs action args = case args of
     let w = read ws
         h = read hs
     in parseArgs (action{nodeF = (scaleToBox w h) . (nodeF action)}) r
+  "--text-as-nodes":r -> parseArgs (action{preprocessF = textAsNodes . (preprocessF action)}) r
   "-u"       :r   -> parseUniform (genGroup distanceGroup) action r
   "--uniform":r   -> parseUniform (genGroup distanceGroup) action r
   "-t"        :r  -> parseTemporal action r
@@ -138,6 +139,7 @@ showHelp = do
     , "      --no-rename              Do not rename vertices, using the same IDs as in the SVG file."
     , "  -s, --scale WIDTH HEIGHT     Scale coordinates into a box of size WIDTH x HEIGHT."
     , "  -t, --temporal [START]       Treat SVG layers as frames, using overlay specifications in the output."
+    , "      --text-as-nodes          Treat text as individual nodes instead of labels."
     , "  -u, --uniform [PERCENT]      Group coordinates by distance. Maximum distance for grouping"
     , "                             is PERCENT of the axis in question."
     , "  -v, --version                Output version and exit."
@@ -190,5 +192,5 @@ execute action
 main :: IO ()
 main = do
   args <- getArgs
-  let action = parseArgs defaultAction args :: Action Double (Style, Double) Node
+  let action = parseArgs defaultAction args :: Action Double Node
   execute action
