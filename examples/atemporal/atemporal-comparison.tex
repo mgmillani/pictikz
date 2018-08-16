@@ -249,4 +249,24 @@
  \caption{Output of pictikz (grid, uniform, plain)}
  \end{figure}\clearpage
 
+\begin{figure}[H]
+ \centering
+ \includegraphics[width=0.5\textwidth]{Pictures/text-circle.pdf}
+ \caption{Input image (\texttt{Pictures/text-circle.svg}).}
+ \end{figure}
+
+ \begin{figure}[H]
+ \centering
+ \begin{tikzpicture}[scale=1.5]
+ \input{Pictures/text-circle-grid.tex}
+ \end{tikzpicture}~
+ \begin{tikzpicture}[scale=1.5]
+ \input{Pictures/text-circle-uniform.tex}
+ \end{tikzpicture}~
+ \begin{tikzpicture}[scale=1.5]
+ \input{Pictures/text-circle-plain.tex}
+ \end{tikzpicture}
+ \caption{Output of pictikz (grid, uniform, plain)}
+ \end{figure}\clearpage
+
 \end{document}
