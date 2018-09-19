@@ -1,5 +1,7 @@
 # Revision history for pictikz
 
+## 1.5.1.0 -- 2018.09.19
+* Fixed a bug where transform was being applied twice.
 ## 1.5.0.0 -- 2018.08.16
 * Treat text as individual nodes (option --text-as-nodes).
 

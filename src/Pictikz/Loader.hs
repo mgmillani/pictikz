@@ -34,12 +34,17 @@ import qualified Text.XML.Light as X
 
 data Style = RawTextStyle T.Format | RawGraphStyle G.Style Double  | Parsed G.Style deriving (Show, Eq, Read)
 
--- TODO: replace b with Style
 data Element a =
   Object (Shape a) String [T.Text] [Style]
   | Line a a a a [Style]
   | Paragraph a a [T.Text] [Style]
-  | Layer [Element a] deriving (Show, Eq)
+  | Layer [Element a] deriving (Eq)
+
+instance Show a => Show (Element a) where
+  show (Object shape iD name style) = concat [iD, ": ", show shape]
+  show (Line x0 y0 x1 y1 _) = concat [show (x0,y0), " -- ", show (x1, y1)]
+  show (Layer els) = concatMap (\x -> show x ++ "\n") els
+  show (Paragraph x y text style) = "Par:" ++ show (x,y)
 
 --  read x = (D.trace ("read:" ++ show x) $ P.read x)
 
@@ -128,7 +133,7 @@ loadGraph svg colors preprocess =
       | (X.qName $ X.elName element) `elem` ["defs"] = []
       | (X.qName $ X.elName element) `elem` ["g"] =
         let matrix' = foldl parseG matrix $ X.elAttribs element
-            rest = concatMap (parseElements (matrix * matrix') ) $ X.elContent element
+            rest = concatMap (parseElements (matrix') ) $ X.elContent element
         in if satisfyAttrib element "id" (\v -> "layer" `isPrefixOf` (map toLower v))
            then [Layer rest]
            else if satisfyAttrib element "groupmode" (=="layer")
@@ -167,7 +172,7 @@ loadGraph svg colors preprocess =
       | "y"  == (X.qName $ X.attrKey attr) = (Rectangle x (read $ X.attrVal attr ) w h, id, name, style, matrix)
       | "height" == (X.qName $ X.attrKey attr) = (Rectangle x y w (read $ X.attrVal attr ), id, name, style, matrix)
       | "width"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr ) h, id, name, style, matrix)
-      | "transform"  == (X.qName $ X.attrKey attr) = (Rectangle x y (read $ X.attrVal attr ) h, id, name, style, matrix * (parseTransform $ X.attrVal attr))
+      | "transform"  == (X.qName $ X.attrKey attr) = (Rectangle x y w h, id, name, style, matrix * (parseTransform $ X.attrVal attr))
       | "style"      == (X.qName $ X.attrKey attr) =
         let fields = parseStyle $ X.attrVal attr
             style' = rawGraphStyle fields
@@ -275,7 +280,6 @@ loadGraph svg colors preprocess =
               in Parsed (G.Stroke cname) : fixLine arrow ss
             RawGraphStyle s  _ -> Parsed s : (fixLine arrow ss)
       in map (fStyle (fixLine G.ArrowNone)) ls
-      --in map (\(Line x0 y0 x1 y1 s) -> Line x0 y0 x1 y1 (fixLine G.ArrowNone s)) ls
     parseCoordinates (x,y, matrix) attr
       | "x" == (X.qName $ X.attrKey attr) = ((read $ X.attrVal attr), y, matrix)
       | "y" == (X.qName $ X.attrKey attr) = (x,(read $ X.attrVal attr), matrix)
