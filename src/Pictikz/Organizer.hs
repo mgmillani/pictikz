@@ -18,8 +18,8 @@ module Pictikz.Organizer where
 
 import qualified Data.Set as S
 import qualified Data.Map as M
-import Pictikz.Drawing
 import Pictikz.Graph
+import Pictikz.Elements
 import Data.List
 import Data.Maybe
 

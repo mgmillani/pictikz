@@ -16,7 +16,7 @@
 
 module Pictikz.Text where
 
-import Pictikz.Drawing
+import qualified Pictikz.Output.Tikz as Tikz
 
 data Format =
     Bold
@@ -30,7 +30,7 @@ data Format =
 
 data Text = Text String [Format] deriving (Eq, Show, Read, Ord)
 
-instance Drawable Format where
+instance Tikz.Drawable Format where
   draw f = case f of
     Bold         -> "\\bfseries{}"
     Italics      -> "\\itseries{}"
@@ -40,13 +40,13 @@ instance Drawable Format where
     RightAligned -> "\\raggedleft{}"
     Centered     -> "\\centering{}"
 
-instance Drawable Text where
+instance Tikz.Drawable Text where
   draw (Text str format) =
     concat $ 
       [ filter (=='\n') str
-      , concatMap draw $ (filter (\f -> f `elem` [Subscript, Superscript])) format
+      , concatMap Tikz.draw $ (filter (\f -> f `elem` [Subscript, Superscript])) format
       , "{"
-      , concatMap draw $ (filter (\f -> not $ f `elem` [Subscript, Superscript])) format
+      , concatMap Tikz.draw $ (filter (\f -> not $ f `elem` [Subscript, Superscript])) format
       , ""
       , filter (/='\n') str
       , "}"      

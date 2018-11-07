@@ -16,11 +16,13 @@
 
 module Main where
 
-import Pictikz.Drawing
 import Pictikz.Organizer
 import Pictikz.Graph
-import Pictikz.Loader
+import Pictikz.Elements
+import Pictikz.Output.Tikz
+import Pictikz.Input.SVG
 import Pictikz.Parser
+import Pictikz.Config
 import System.Environment
 import Data.Char
 
@@ -145,7 +147,7 @@ showHelp = do
     , "  -v, --version                Output version and exit."
     ]
 
-showVersion = putStrLn $ appname ++ appVersion ++ applicense
+showVersion = putStrLn $ appname ++ " " ++ appVersion ++ " " ++ applicense
 
 defaultColors =
   [ (RGB    0    0    0, "pictikz-black")
@@ -174,13 +176,14 @@ execute action
   | inF action == "" = showHelp
   | otherwise = do
     svg <- readFile $ inF action
-    let layers = filter (\(Graph n e) -> not $ null n) $ loadGraph svg (colors action) (preprocessF action)
-        bbs = map boundingBox layers
+    let layers  = loadElements svg (colors action) (preprocessF action)
+        layers' = filter (\(Graph n e) -> not $ null n) $ makeGraph layers (colors action)
+        bbs = map boundingBox layers'
         (x0,y0,x1,y1) = foldl1 (\(xa,ya,xb,yb) (xc,yc,xd,yd) -> (min xa xc, min ya yc, max xb xd, max yb yd)) bbs
         w = x1 - x0
         h = y1 - y0
         epsilon = defaultPercent * (min w h) * 0.5
-        (Graph nodes edges) = if temporal action then foldr1 (mergeLayers epsilon) layers else foldr1 (\(Graph n0 e0) (Graph n1 e1) -> Graph (n0 ++ n1) (e0 ++ e1)) layers
+        (Graph nodes edges) = if temporal action then foldr1 (mergeLayers epsilon) layers' else foldr1 (\(Graph n0 e0) (Graph n1 e1) -> Graph (n0 ++ n1) (e0 ++ e1)) layers'
         -- shift time stamps if necessary, or disable them by setting them to 0
         nodes' = map (fTime $ if temporal action then shiftTime $ startTime action - 1 else (\x -> (0,0))) nodes
         edges' = map (fTime $ if temporal action then shiftTime $ startTime action - 1 else (\x -> (0,0))) edges
